@@ -20,7 +20,6 @@ class MyHTMLParser(HTMLParser):
                 if attr[0].encode('utf-8') == 'href':
                     self.urls.append(attr[1].encode('utf-8'))
 
-
 class Crawler:
     """The class responsible to do the crawling"""
 
@@ -40,7 +39,7 @@ class Crawler:
     ##
     @staticmethod
     def get_file_count():
-        with file_count_lock:
+        with Crawler.file_count_lock:
             Crawler.file_count += 1
             return Crawler.file_count
 

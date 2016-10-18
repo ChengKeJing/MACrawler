@@ -38,7 +38,10 @@ def run():
 		if (current_time - last_sending_time) < 15 :
 			time.sleep(16 - current_time + last_sending_time)
 
+		last_sending_time = time.time()
 		json = postfile.post_multipart(host, selector, fields, files)
+		## TODO(ChengKeJing) : extract useful information and store it into database
+		## TODO(boxin) : solve the server error and crawl and parse the analysis result
 		print json
 
 try:
