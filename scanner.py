@@ -1,24 +1,14 @@
-import postfile
 import time
 import os.path
 
-from threading import Thread, RLock
-
-# The host that Virus total server is on
-host = "www.virustotal.com"
-
-# The url of file scanner
-selector = "https://www.virustotal.com/vtapi/v2/file/scan"
-
-# API key for authentification
-# Registered by @boxin
-fields = [("apikey", "0cf94a0fbb09cbbd69e5e264eb24e9e1d8607157acaa25d1ad58a407022456a0")]
+from virustotal import *
 
 finished = False
 
 def run():
 	global finished
 	
+	v = Virustotal()
 	file_count = 1
 	last_sending_time = -20
 
@@ -29,9 +19,6 @@ def run():
 
 		while (not os.path.isfile(file_name)) and (not finished):
 			time.sleep(5)
-
-		file_to_send = open(file_name, 'rb').read()
-		files = [("file", file_name, file_to_send)]
 		
 		current_time = time.time()
 
@@ -39,7 +26,7 @@ def run():
 			time.sleep(16 - current_time + last_sending_time)
 
 		last_sending_time = time.time()
-		json = postfile.post_multipart(host, selector, fields, files)
+		json = v.rscSubmit(file_name)
 		## TODO(ChengKeJing) : extract useful information and store it into database
 		## TODO(boxin) : solve the server error and crawl and parse the analysis result
 		print json
