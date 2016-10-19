@@ -16,6 +16,34 @@ INSTALL POSTGRES:
 
 """
 
+class scanResults(object):
+	fileName = ""
+	scanID = ""
+	permalink = ""
+
+	def __init__(self):
+		self.fileName = ""
+		self.scanID = ""
+		self.permalink = ""
+
+	def setFileName(self, fileName):
+		self.fileName = fileName
+
+	def setScanID(self, scanID):
+		self.scanID = scanID
+
+	def setPermalink(self, permalink):
+		self.permalink = permalink
+
+	def getFileName(self):
+		return self.fileName
+
+	def getScanID(self):
+		return self.scanID
+
+	def getPermalink(self):
+		return self.permalink
+
 class db(object):
 	# Initialization includes connection and creation of cursor
 	def __init__(self):	
@@ -85,19 +113,23 @@ class db(object):
 			print("Error in fetch statement")
 			self.conn.rollback()
 
-
-	def getAllEntries(self):
-		self.cursor.execute("SELECT * from test")
+	# Returns a list of scanResults objects
+	def getAllScanResults(self):
+		self.cursor.execute("SELECT * from scanResults")
 		rows = self.cursor.fetchall()
-		print(rows)
+		scanResultsList = []
+		for i in rows:
+			tempScanResults = scanResults()
+			tempScanResults.setFileName(i[0])
+			tempScanResults.setScanID(i[1])
+			tempScanResults.setPermalink(i[2])
+			scanResultsList.append(tempScanResults)
+		return scanResultsList
+
 
 a = db()
-a.deleteTable("visitedURLs")
-a.createVisitedTable("visitedURLs")
-a.insertVisitedEntry("www.google.com", "visitedURLs")
-a.insertVisitedEntry("www.google.com", "visitedURLs")
-success = a.findVisitedEntry("www.google.com", "visitedURLs")
-fail = a.findVisitedEntry("www.goomei.com", "visitedURLs")
-print("Searching www.google.com: " + str(success))
-print("Searching www.goomei.com: " + str(fail))
+resultList = a.getAllScanResults()
+for i in resultList:
+	print(i.getFileName() + " | " + i.getScanID() + " | " + i.getPermalink() + "\n")
 a.closeDB()
+
