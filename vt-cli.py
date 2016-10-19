@@ -1,14 +1,11 @@
 import argparse
 import sys
 
-from virustotal import *
+from virustotal import Virustotal
 from database import db
 
 class VirusTotalCli:
     """ Command-line interface to retrieve scan results """
-
-    MACdb = db()
-    vt_api = VirusTotal()
 
     def __init__(self):
         arg_parser = argparse.ArgumentParser(description='Command-line Interface to retrieve VirusTotal Scan results', usage='python vt-cli.py <command> [<args>]')
@@ -42,15 +39,16 @@ class VirusTotalCli:
     def list(self):
         """ Retrieves the scan results up to the last 10 files. """
 
-        arg_parser = argparse.ArgumentParser(description="Retrieves the scan results up to the last 10 files. ")
+        MACdb = db()
+        vt_api = Virustotal()
 
         # retrieve all results from database
         file_list = MACdb.getAllScanResults()
 
         # exit program if database is empty
         if len(file_list) == 0:
-             print("Database is empty.")
-             exit(1)
+            print("Database is empty.")
+            exit(1)
 
         max_list_size = len(file_list)
         if len(file_list) > 10:
@@ -73,12 +71,16 @@ class VirusTotalCli:
         batch_scan_results = vt_api.resBatchReport(res_str)
 
         for scan_result in batch_scan_results:
+            print("Results for resource ID: {}\n".format(scan_result['resource']))
             if scan_result['response_code'] == 1:
-                print("Results for resource ID: {}\n".format(scan_result['resource']))
                 print("Scan Date: {}\n".format(scan_result['scan_date']))
                 print("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
 
+            elif scan_result['response_code'] == 0:
+                print(scan_result['verbose'])
+
+        MACdb.close()
+
 
 if __name__ == '__main__':
-  VirusTotalCli()
-
+    VirusTotalCli()
