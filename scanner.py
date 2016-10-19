@@ -3,9 +3,13 @@ import os.path
 import json
 
 from virustotal import *
+from database import db
 
 # global variable to terminate the run function
 finished = False
+
+# Initialize database connection
+MACdb = db()
 
 def run():
 	global finished
@@ -18,6 +22,10 @@ def run():
 
 	# Time the last post packet to keep the rate below per 15 seconds
 	last_sending_time = -20
+
+	# Delete old table and recreate new one
+	MACdb.deleteTable("scanResults")
+	MACdb.createScanResultTable("scanResults")
 
 	while not finished:
 		
@@ -53,8 +61,9 @@ def run():
 		id_of_the_file = returned_table['scan_id']
 		link_to_result = returned_table['permalink']
 		print "id of the file is : ", id_of_the_file, "\nlink to the result is: ", link_to_result, "\n"
-		## TODO(ChengKeJing) : extract useful information and store it into database
 
+		## Extract useful information and store it into database
+		MACdb.insertScanResult("scanResults", file_name, id_of_the_file, link_to_result)
 
 try:
 	run()
@@ -62,4 +71,5 @@ try:
 except KeyboardInterrupt as e:
     print "Stopping, please wait. Don't spam them Ctrl-C on me"
     finished = True
+    MACdb.closeDB()
     print "Exit main process."
