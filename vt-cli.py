@@ -10,7 +10,7 @@ class VirusTotalCli:
 
     def __init__(self):
         arg_parser = argparse.ArgumentParser(description='Command-line Interface to retrieve VirusTotal Scan results',
-                                             usage='python vt-cli.py <command> [<args>]')
+                                             usage='python vt-cli.py list')
 
         arg_parser.add_argument('command', help='Subcommand to run')
 
