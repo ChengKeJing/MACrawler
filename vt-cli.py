@@ -83,7 +83,7 @@ class VirusTotalCli:
 def write_scan_result(scan_result, out_file):
     """ Writes the current scan result to a text file. """
 
-    result_header = "Results for resource ID: {}".format(scan_result['resource'])
+    result_header = "Results for resource ID: {}\n".format(scan_result['resource'])
     out_file.write(result_header)
     out_file.write("=" * len(result_header) + "\n")
 

@@ -3,3 +3,6 @@ file*
 
 # Compiled Python Files
 *.pyc
+
+# Text Files
+scanresults.txt
