@@ -127,9 +127,9 @@ class db(object):
 		return scanResultsList
 
 
-a = db()
+"""a = db()
 resultList = a.getAllScanResults()
 for i in resultList:
 	print(i.getFileName() + " | " + i.getScanID() + " | " + i.getPermalink() + "\n")
 a.closeDB()
-
+"""

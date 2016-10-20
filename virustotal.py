@@ -35,9 +35,9 @@ class Virustotal():
         parameters = {"resource":rsc, "apikey":self.apikey}
         r = requests.post(base, data=parameters)
         resp = r.json()
-        results = parse_resp(resp)
-        return results
-   
+        #results = parse_resp(resp)
+        return resp
+
 
     def urlReport(self, rsc, scan=0):
         """ Get latest report URL scan report of resource """

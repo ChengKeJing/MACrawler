@@ -58,28 +58,35 @@ class VirusTotalCli:
         resource_list = []
 
         # append the first file scan ID to the list
-        resource_list.append(file_list[0].getFileName())
+        resource_list.append(file_list[0].getScanID())
 
         if max_list_size > 1:
             # append the remaining file scan IDs to the list
             for file_details in file_list[1:max_list_size]:
-                resource_list.append(', ' + file_details.getFileName())
+                resource_list.append(', ' + file_details.getScanID())
 
         res_str = ''.join(resource_list)
 
-        # Retrieve scan results using VirusTotal API
-        batch_scan_results = vt_api.resBatchReport(res_str)
+        # Retrieve scan results using VirusTotal API in the form of a Dict
+        batch_scan_results = vt_api.rscBatchReport(res_str)
 
         for scan_result in batch_scan_results:
-            print("Results for resource ID: {}\n".format(scan_result['resource']))
+            result_header = "Results for resource ID: {}".format(scan_result['resource'])
+            print(result_header)
+            print("="*len(result_header) + "\n")
+
+            # print("Response Code: {}\n".format(scan_result['response_code']))
+
             if scan_result['response_code'] == 1:
                 print("Scan Date: {}\n".format(scan_result['scan_date']))
                 print("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
+                print("Permalink to VirusTotal analysis: {}\n".format(scan_result['permalink']))
 
             elif scan_result['response_code'] == 0:
-                print(scan_result['verbose'])
+                print("Error Message: {}\n\n".format(scan_result['verbose_msg']))
 
-        MACdb.close()
+            MACdb.closeDB()
+
 
 
 if __name__ == '__main__':
