@@ -45,47 +45,56 @@ class VirusTotalCli:
         # retrieve all results from database
         file_list = MACdb.getAllScanResults()
 
+        max_list_size = len(file_list)
+
         # exit program if database is empty
-        if len(file_list) == 0:
+        if max_list_size == 0:
             print("Database is empty.")
             exit(1)
 
-        max_list_size = len(file_list)
-        if len(file_list) > 10:
-            max_list_size = 10
+        if len(file_list) > 8:
+            max_list_size = 8
 
         # create an empty list to start appending the resource hashes
         resource_list = []
 
-        # append the first file scan ID to the list
-        resource_list.append(file_list[0].getScanID())
+        for i in range(0, max_list_size + 1):
+            # append the first file scan ID to the list
+            if i == 0:
+                resource_list.append(file_list[i].getScanID())
+            else:
+                # append the remaining file scan IDs to the list
+                resource_list.append(', ' + file_list[i].getScanID())
 
-        if max_list_size > 1:
-            # append the remaining file scan IDs to the list
-            for file_details in file_list[1:max_list_size]:
-                resource_list.append(', ' + file_details.getScanID())
+            if len(resource_list) == 4:
+                res_str = ''.join(resource_list)
+                # print(res_str + '\n')
 
-        res_str = ''.join(resource_list)
+                # Retrieve scan results using VirusTotal API in the form of a Dict
+                print("Sending file batch...\n")
+                batch_scan_results = vt_api.rscBatchReport(res_str)
 
-        # Retrieve scan results using VirusTotal API in the form of a Dict
-        batch_scan_results = vt_api.rscBatchReport(res_str)
+                for scan_result in batch_scan_results:
+                    result_header = "Results for resource ID: {}".format(scan_result['resource'])
+                    print(result_header)
+                    print("="*len(result_header) + "\n")
 
-        for scan_result in batch_scan_results:
-            result_header = "Results for resource ID: {}".format(scan_result['resource'])
-            print(result_header)
-            print("="*len(result_header) + "\n")
+                    # print("Response Code: {}\n".format(scan_result['response_code']))
 
-            # print("Response Code: {}\n".format(scan_result['response_code']))
+                    if scan_result['response_code'] == 1:
+                        print("Scan Date: {}\n".format(scan_result['scan_date']))
+                        print("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
+                        print("Permalink to VirusTotal analysis: {}\n\n".format(scan_result['permalink']))
 
-            if scan_result['response_code'] == 1:
-                print("Scan Date: {}\n".format(scan_result['scan_date']))
-                print("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
-                print("Permalink to VirusTotal analysis: {}\n".format(scan_result['permalink']))
+                    elif scan_result['response_code'] == 0:
+                        print("Error Message: {}\n\n".format(scan_result['verbose_msg']))
 
-            elif scan_result['response_code'] == 0:
-                print("Error Message: {}\n\n".format(scan_result['verbose_msg']))
+                    elif scan_result['response_code'] == -2:
+                        print(scan_result['verbose_msg'] + "\n\n")
 
-            MACdb.closeDB()
+                resource_list = []
+
+        MACdb.closeDB()
 
 
 
