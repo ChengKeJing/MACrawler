@@ -1,0 +1,5 @@
+# downloaded files
+file*
+
+# Compiled Python Files
+*.pyc
