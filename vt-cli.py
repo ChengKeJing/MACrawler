@@ -4,11 +4,13 @@ import sys
 from virustotal import Virustotal
 from database import db
 
+
 class VirusTotalCli:
     """ Command-line interface to retrieve scan results """
 
     def __init__(self):
-        arg_parser = argparse.ArgumentParser(description='Command-line Interface to retrieve VirusTotal Scan results', usage='python vt-cli.py <command> [<args>]')
+        arg_parser = argparse.ArgumentParser(description='Command-line Interface to retrieve VirusTotal Scan results',
+                                             usage='python vt-cli.py <command> [<args>]')
 
         arg_parser.add_argument('command', help='Subcommand to run')
 
@@ -23,22 +25,10 @@ class VirusTotalCli:
         # use dispatch pattern to invoke method with same name
         getattr(self, args.command)()
 
-    def search(self):
-        """ Searches the database for a file and makes a request to the VirusTotal server for its corresponding result. """
-
-        arg_parser = argparse.ArgumentParser(description="Searches the database for a specific file and retrieves the scan results from VirusTotal.")
-
-        arg_parser.add_argument("file_name", help="File Name")
-        arg_parser.add_argument("-v", "--verbose", action="store_true", help="Display scan results with more detail")
-
-        # we ignore the first (main) command and parse the subcommands and its flags.
-        args = arg_parser.parse_args(sys.argv[2:])
-
-        #TODO(@jftoh) finish method to search for a specific file
-    
     def list(self):
-        """ Retrieves the scan results up to the last 10 files. """
+        """ Retrieves the scan results for the first 8 files. """
 
+        # initialize postgreSQL database and VirusTotal API
         MACdb = db()
         vt_api = Virustotal()
 
@@ -58,6 +48,8 @@ class VirusTotalCli:
         # create an empty list to start appending the resource hashes
         resource_list = []
 
+        out_file = open("scanresults.txt", "w")
+
         for i in range(0, max_list_size + 1):
             # append the first file scan ID to the list
             if i == 0:
@@ -67,35 +59,46 @@ class VirusTotalCli:
                 resource_list.append(', ' + file_list[i].getScanID())
 
             if len(resource_list) == 4:
+                """ we send the batch to VirusTotal when the file count reaches 4 """
                 res_str = ''.join(resource_list)
-                # print(res_str + '\n')
 
                 # Retrieve scan results using VirusTotal API in the form of a Dict
                 print("Sending file batch...\n")
                 batch_scan_results = vt_api.rscBatchReport(res_str)
 
                 for scan_result in batch_scan_results:
-                    result_header = "Results for resource ID: {}".format(scan_result['resource'])
-                    print(result_header)
-                    print("="*len(result_header) + "\n")
+                    write_scan_result(scan_result, out_file)
 
-                    # print("Response Code: {}\n".format(scan_result['response_code']))
+                print("Results for current batch successfully written to file {}.\n\n".format(out_file.name))
 
-                    if scan_result['response_code'] == 1:
-                        print("Scan Date: {}\n".format(scan_result['scan_date']))
-                        print("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
-                        print("Permalink to VirusTotal analysis: {}\n\n".format(scan_result['permalink']))
-
-                    elif scan_result['response_code'] == 0:
-                        print("Error Message: {}\n\n".format(scan_result['verbose_msg']))
-
-                    elif scan_result['response_code'] == -2:
-                        print(scan_result['verbose_msg'] + "\n\n")
-
+                # clears the resource list for the next batch of scan IDs
                 resource_list = []
 
+        # close the database when done
         MACdb.closeDB()
 
+        out_file.close()
+
+
+def write_scan_result(scan_result, out_file):
+    """ Writes the current scan result to a text file. """
+
+    result_header = "Results for resource ID: {}".format(scan_result['resource'])
+    out_file.write(result_header)
+    out_file.write("=" * len(result_header) + "\n")
+
+    # print("Response Code: {}\n".format(scan_result['response_code']))
+
+    if scan_result['response_code'] == 1:
+        out_file.write("Scan Date: {}\n".format(scan_result['scan_date']))
+        out_file.write("Number of positives: {}/{}\n".format(scan_result['positives'], scan_result['total']))
+        out_file.write("Permalink to VirusTotal analysis: {}\n\n".format(scan_result['permalink']))
+
+    elif scan_result['response_code'] == 0:
+        out_file.write("Error Message: {}\n\n".format(scan_result['verbose_msg']))
+
+    elif scan_result['response_code'] == -2:
+        out_file.write(scan_result['verbose_msg'] + "\n\n")
 
 
 if __name__ == '__main__':
