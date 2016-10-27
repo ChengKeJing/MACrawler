@@ -61,9 +61,12 @@ class db(object):
 		except Exception as e:
 			print("Database cannot close properly")
 
-	def createVisitedTable(self, tableName):
+	# Creates both visited table and fileData table
+	def createCrawlerTables(self, tableName_1, tableName_2):
 		try:
-			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(256) PRIMARY KEY );")
+			self.cursor.execute("CREATE TABLE " + tableName_1 + " ( url varchar(256) PRIMARY KEY , fileData bytea );")
+			self.conn.commit()
+			self.cursor.execute("CREATE TABLE " + tableName_2 + " ( fileData bytea PRIMARY KEY , isSafe boolean );")
 			self.conn.commit()
 		except Exception as e:
 			print("Visited Table creation failed")
@@ -85,9 +88,10 @@ class db(object):
 			self.conn.rollback()
 
 
-	def insertVisitedEntry(self, url, tableName):
+	def insertVisitedEntry(self, tableName, url, fileData):
 		try:
-			self.cursor.execute("INSERT INTO " + tableName + " VALUES (" + "'" + url + "');")
+			"""self.cursor.execute("INSERT INTO " + tableName + " VALUES (" + "'" + url + "');")"""
+			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, psycopg2.Binary(fileData)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + tableName)
@@ -126,10 +130,25 @@ class db(object):
 			scanResultsList.append(tempScanResults)
 		return scanResultsList
 
+	def getAllVisited(self):
+		self.cursor.execute("SELECT * FROM visitedTable")
+		rows = self.cursor.fetchall()
+		output = open('output.txt', 'w+')
+		for i in rows:
+			output.write("URL: " + i[0] + "\n")
+			output.write("File Data: " + str(i[1]) + "\n\n")
+		output.close()
 
-"""a = db()
-resultList = a.getAllScanResults()
-for i in resultList:
-	print(i.getFileName() + " | " + i.getScanID() + " | " + i.getPermalink() + "\n")
+
+a = db()
+a.deleteTable("visitedTable")
+a.deleteTable("fileDataTable")
+a.createCrawlerTables("visitedTable", "fileDataTable")
+inputFile = open('file1', 'r')
+fileData = inputFile.read()
+"""print(psycopg2.Binary(fileData))"""
+a.insertVisitedEntry("visitedTable", "www.google.com", fileData)
+inputFile.close()
+a.getAllVisited()
 a.closeDB()
-"""
+
