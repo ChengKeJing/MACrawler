@@ -90,8 +90,10 @@ class db(object):
 
 	def insertVisitedEntry(self, tableName, url, fileData):
 		try:
-			"""self.cursor.execute("INSERT INTO " + tableName + " VALUES (" + "'" + url + "');")"""
-			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, psycopg2.Binary(fileData)))
+			if fileData is None:
+				self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, fileData))
+			else:
+				self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, psycopg2.Binary(fileData)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + tableName)
@@ -107,7 +109,7 @@ class db(object):
 
 	def findVisitedEntry(self, url, tableName):
 		try:
-			self.cursor.execute("SELECT * from " + tableName + " WHERE url = " + "'" + url + "';")
+			self.cursor.execute("SELECT url from " + tableName + " WHERE url = " + "'" + url + "';")
 			rows = self.cursor.fetchall()
 			if (len(rows) == 1):
 				return True
@@ -147,7 +149,8 @@ a.createCrawlerTables("visitedTable", "fileDataTable")
 inputFile = open('file1', 'r')
 fileData = inputFile.read()
 """print(psycopg2.Binary(fileData))"""
-a.insertVisitedEntry("visitedTable", "www.google.com", fileData)
+a.insertVisitedEntry("visitedTable", "www.yahoo.com", fileData)
+a.insertVisitedEntry("visitedTable", "www.google.com", None)
 inputFile.close()
 a.getAllVisited()
 a.closeDB()
