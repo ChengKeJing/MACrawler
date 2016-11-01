@@ -7,6 +7,8 @@ from urlparse import urlparse, urljoin
 import requests
 from HTMLParser import HTMLParser
 
+from database import db
+
 # create a subclass and override the handler methods
 class MyHTMLParser(HTMLParser):
     def __init__(self):
@@ -22,6 +24,9 @@ class MyHTMLParser(HTMLParser):
 
 class Crawler:
     """The class responsible to do the crawling"""
+
+    # Constants
+    VISITED_TABLE = 'visitedTable'
 
     # For file naming
     file_count = 0
@@ -50,8 +55,9 @@ class Crawler:
     ## @param      url_q  The url Queue from which the Crawler retrieve and
     ##                    store URLs from/to
     ##
-    def __init__(self, url_q):
+    def __init__(self, url_q, db):
         self.url_q = url_q
+        self.db = db
 
     ##
     ## @brief      Runs the crawler.
@@ -71,10 +77,13 @@ class Crawler:
             print 'Content-Type: ', response.headers['Content-Type']
 
             if 'text' not in response.headers['Content-Type']:
-                out = open('file'+str(Crawler.get_file_count()), 'wb')
-                out.write(response.content)
-                out.close()
+                self.db.insertVisitedEntry(
+                        Crawler.VISITED_TABLE, url, response.content)
+                # out = open('file'+str(Crawler.get_file_count()), 'wb')
+                # out.write(response.content)
+                # out.close()
             else:
+                self.db.insertVisitedEntry(Crawler.VISITED_TABLE, url, None)
                 parser = MyHTMLParser()
                 parser.feed(response.text)
                 for obtained_url in parser.urls:
@@ -89,21 +98,28 @@ class Crawler:
                         obtained_url = urljoin(url, obtained_url)
 
                     # print 'Pushing {} to url_q'.format(obtained_url)
-                    self.url_q.put(obtained_url)
+                    if not self.db.findVisitedEntry(obtained_url, Crawler.VISITED_TABLE):
+                        self.url_q.put(obtained_url)
+
             print "Sleeping..."
             time.sleep(random.randint(5,15))
 
-def run_crawler(q):
-    crawler = Crawler(q)
+def run_crawler(q, db):
+    crawler = Crawler(q, db)
     crawler.run()
 
 if __name__ == '__main__':
+    db = db()
+    db.deleteTable('visitedTable')
+    db.deleteTable('fileDataTable')
+    db.createCrawlerTables('visitedTable','fileDataTable')
+
     q = Queue()
     q.put('http://www.comp.nus.edu.sg')
 
     threads = []
     for i in range(0,3):
-        t = Thread(target=run_crawler, args=[q])
+        t = Thread(target=run_crawler, args=(q,db))
         t.start()
         threads.append(t)
 
@@ -116,4 +132,5 @@ if __name__ == '__main__':
         Crawler.stopped = True
         for i in range(0,3):
             threads[i].join()
+        db.closeDB()
         print "All threads exited. Exit main process."
