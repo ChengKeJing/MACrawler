@@ -1,3 +1,5 @@
 from django.shortcuts import render
 
-# Create your views here.
+# main page
+def index(request):
+	return render(request, 'macrawler/index.html')
