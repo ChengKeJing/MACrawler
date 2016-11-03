@@ -62,49 +62,92 @@ class db(object):
 			print("Database cannot close properly")
 
 	# Creates both visited table and fileData table
-	def createCrawlerTables(self, tableName_1, tableName_2):
+	def createCrawlerTables(self, tableName_1, tableName_2, tableName_3):
 		try:
-			self.cursor.execute("CREATE TABLE " + tableName_1 + " ( url varchar(256) PRIMARY KEY , fileData bytea );")
+			self.cursor.execute("CREATE TABLE " + tableName_1 + " ( url varchar(256) PRIMARY KEY , urlType numeric, domain varchar(128), isScanned boolean);")
 			self.conn.commit()
-			self.cursor.execute("CREATE TABLE " + tableName_2 + " ( fileData bytea PRIMARY KEY , isSafe boolean );")
+			self.cursor.execute("CREATE TABLE " + tableName_2 + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + tableName_1 + "(url), result varchar(3000), status numeric );")
+			self.conn.commit()
+			self.cursor.execute("CREATE TABLE " + tableName_3 + " ( id SERIAL, url varchar(256));")
 			self.conn.commit()
 		except Exception as e:
 			print("Visited Table creation failed")
 
-	def createScanResultTable(self, tableName):
-		try:
-			self.cursor.execute("CREATE TABLE " + tableName + " ( fileName varchar(256) PRIMARY KEY , scanID varchar(100) , permalink varchar(256) );")
-			self.conn.commit()
-		except Exception as e:
-			print("Scan Result Table creation failed")
-
-	def deleteTable(self, tableName):
+	def deleteAllTables(self, tableName_1, tableName_2, tableName_3):
 		try:
 			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
-			self.cursor.execute("DROP TABLE " + tableName + ";")
+			self.cursor.execute("DROP TABLE " + tableName_2 + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + tableName_3 + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + tableName_1 + ";")
 			self.conn.commit()
 		except Exception as e:
 			print("Table cannot be dropped")
 			self.conn.rollback()
 
+	'''
+	THIS PORTION IS FOR VISITED URL TABLE
+	'''
 
-	def insertVisitedEntry(self, tableName, url, fileData):
+	def insertVisitedEntry(self, tableName, url, urlType, domain, isScanned):
 		try:
-			if fileData is None:
-				self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, fileData))
-			else:
-				self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s);", (url, psycopg2.Binary(fileData)))
+			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s, %s, %s);", (url, str(urlType), domain, str(isScanned)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + tableName)
 			self.conn.rollback()
 
-	def insertScanResult(self, tableName, fileID, scanID, permalink):
+	def editVisitedScanEntry(self, tableName, url, isScanned):
 		try:
-			self.cursor.execute("INSERT INTO " + tableName + " VALUES (" + "'" + fileID + "', '" + scanID + "', '" + permalink + "');")
+			self.cursor.execute("UPDATE " + tableName + " SET isScanned	= %s WHERE url = %s;", (str(isScanned), url))
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be updated")
+			self.conn.rollback()
+
+
+
+	'''
+	THIS PORTION IS FOR SCAN RESULT TABLE
+	'''
+
+	def insertScanResultEntry(self, tableName, scanID, url, result, status):
+		try:
+			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + tableName)
+			self.conn.rollback()
+
+	def editScanResultStatus(self, tableName, scanID, status):
+		try:
+			self.cursor.execute("UPDATE " + tableName + " SET status = %s WHERE scanID = %s;", (str(status), scanID))
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be inserted into table " + tableName)
+			self.conn.rollback()	
+
+
+
+	'''
+	THIS PORTION IS FOR URL QUEUE TABLE
+	'''
+
+	def insertURLQueueEntry(self, tableName, url):
+		try:
+			self.cursor.execute("INSERT INTO " + tableName + " (url) VALUES ('" + url + "');")
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be inserted into table " + tableName)
+			self.conn.rollback()
+
+	def deleteURLQueueEntry(self, tableName, url):
+		try:
+			self.cursor.execute("DELETE FROM " + tableName + " WHERE url = '" + url + "';")
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be deleted from table " + tableName)
 			self.conn.rollback()
 
 	def findVisitedEntry(self, url, tableName):
@@ -143,15 +186,15 @@ class db(object):
 
 
 a = db()
-a.deleteTable("visitedTable")
-a.deleteTable("fileDataTable")
-a.createCrawlerTables("visitedTable", "fileDataTable")
-inputFile = open('file1', 'r')
-fileData = inputFile.read()
-"""print(psycopg2.Binary(fileData))"""
-a.insertVisitedEntry("visitedTable", "www.yahoo.com", fileData)
-a.insertVisitedEntry("visitedTable", "www.google.com", None)
-inputFile.close()
-a.getAllVisited()
+# a.deleteAllTables("visitedTable", "scanResultTable", "urlQueueTable")
+# a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
+# a.insertVisitedEntry("visitedTable", "www.google.com.sg", 0, "www.google.com", False)
+# a.editVisitedScanEntry("visitedTable", "www.google.com.sg", True)
+# a.insertScanResultEntry("scanResultTable", "scanID_1", "www.google.com.sg", None, 0)
+# a.editScanResultStatus("scanResultTable", "scanID_1", 2)
+# a.insertURLQueueEntry("urlQueueTable", "www.google.com.sg")
+# a.deleteURLQueueEntry("urlQueueTable", "www.google.com.sg")
+
+
 a.closeDB()
 
