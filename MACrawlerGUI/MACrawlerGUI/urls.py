@@ -15,7 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+import macrawler.urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^$', macrawler.views.index),
+    url(r'^search/(?P<domain>.*)', macrawler.views.index, name='search'),
 ]

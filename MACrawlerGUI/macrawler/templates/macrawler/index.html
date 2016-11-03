@@ -2,12 +2,12 @@
 
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-<form action="{% url 'macrawler:search' %}" method="post">
+<form action="{% url 'search' %}" method="get">
 	{% csrf_token %}
 	<div>
 		<input type="text" name="domain_name">
 	</div>
 	<div class="button">
 		<input type="submit" value="Search" />
-	</div>	
+	</div>
 </form>
