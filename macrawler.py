@@ -15,7 +15,6 @@ def search():
 		error_message = "Domain cannot be blank!"
 		return render_template('index.html', error_message=error_message)
 	else:
-		"""
 		MACdb = db()
 		scan_results = MACdb.getAllScanResultsByDomain(domain_name);
 
@@ -23,6 +22,4 @@ def search():
 
 		MACdb.closeDB()
 
-		return render_template('searchresults.html', num_of_files, domain_name, scan_results)
-		"""
-		return render_template('index.html')
+		return render_template('searchresults.html', num_of_files=num_of_files, domain_name=domain_name, scan_results=scan_results)
