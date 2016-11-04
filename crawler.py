@@ -25,28 +25,8 @@ class MyHTMLParser(HTMLParser):
 class Crawler:
     """The class responsible to do the crawling"""
 
-    # Constants
-    VISITED_TABLE = 'visitedTable'
-
-    # For file naming
-    file_count = 0
-
-    # Prevent race condition and whatnot when reading/incrementing file_count
-    file_count_lock = RLock()
-
     # To accept interrupt
     stopped = False
-
-    ##
-    ## @brief      Gets the file count, which is used for file name identifier.
-    ##
-    ## @return     The file count.
-    ##
-    @staticmethod
-    def get_file_count():
-        with Crawler.file_count_lock:
-            Crawler.file_count += 1
-            return Crawler.file_count
 
     ##
     ## @brief      Constructor.
@@ -66,6 +46,8 @@ class Crawler:
     ##
     def run(self):
         while not Crawler.stopped:
+            print "Sleeping..."
+            time.sleep(random.randint(5,15))
             # TODO(@digawp): handle case when the url_q is really empty (and no
             # one else is going to replenish it)
             # NOTE: use a wrapper for the queue, timeout, try-catch
@@ -101,8 +83,6 @@ class Crawler:
                     if not self.db.findVisitedEntry(obtained_url, Crawler.VISITED_TABLE):
                         self.url_q.put(obtained_url)
 
-            print "Sleeping..."
-            time.sleep(random.randint(5,15))
 
 def run_crawler(q, db):
     crawler = Crawler(q, db)
