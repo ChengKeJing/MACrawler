@@ -17,32 +17,40 @@ INSTALL POSTGRES:
 """
 
 class scanResults(object):
-	fileName = ""
 	scanID = ""
-	permalink = ""
+	url = ""
+	result = ""
+	status = -1
 
 	def __init__(self):
 		self.fileName = ""
 		self.scanID = ""
 		self.permalink = ""
+		self.status = -1
 
-	def setFileName(self, fileName):
-		self.fileName = fileName
+	def setURL(self, url):
+		self.url = url
 
 	def setScanID(self, scanID):
 		self.scanID = scanID
 
-	def setPermalink(self, permalink):
-		self.permalink = permalink
+	def setResult(self, result):
+		self.result = result
 
-	def getFileName(self):
-		return self.fileName
+	def setStatus(self, status):
+		self.status = status
+
+	def getURL(self):
+		return self.url
 
 	def getScanID(self):
 		return self.scanID
 
-	def getPermalink(self):
-		return self.permalink
+	def getResult(self):
+		return self.result
+
+	def getStatus(self):
+		return self.status
 
 class db(object):
 	# Initialization includes connection and creation of cursor
@@ -77,7 +85,7 @@ class db(object):
 	def createScanResultTable(self, tableName):
 		try:
 			self.scanResult = tableName;
-			self.cursor.execute("CREATE TABLE " + tableName + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + tableName_1 + "(url), result varchar(3000), status numeric );")
+			self.cursor.execute("CREATE TABLE " + tableName + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + self.visited + "(url), result varchar(3000), status numeric );")
 			self.conn.commit()
 		except Exception as e:
 			print("Scan Result Table creation failed")
@@ -85,7 +93,7 @@ class db(object):
 	def createURLQueueTable(self, tableName):
 		try:
 			self.urlQueue = tableName
-			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(256));")
+			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(256) UNIQUE);")
 			self.conn.commit()
 		except Exception as e:
 			print("URL Queue Table creation failed")				
@@ -126,20 +134,6 @@ class db(object):
 			self.conn.rollback()
 
 	# Deletes all the existing tables
-	def deleteAllTablesWithNames(self, visitedTable, scanResultTable, urlQueueTable):
-		try:
-			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
-			self.cursor.execute("DROP TABLE " + scanResultTable + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + urlQueueTable + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + visitedTable + ";")
-			self.conn.commit()
-		except Exception as e:
-			print("Table cannot be dropped")
-			self.conn.rollback()
-
-	# Deletes all the existing tables
 	def deleteAllTables(self):
 		try:
 			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
@@ -153,12 +147,14 @@ class db(object):
 			print("Table cannot be dropped")
 			self.conn.rollback()
 
+
+
 	'''
 	THIS PORTION IS FOR VISITED URL TABLE THAT IS USED BY THE CRAWLER
 	'''
-	def insertVisitedEntry(self, url, urlType, domain, isScanned):
+	def insertVisitedEntry(self, url, urlType, domain):
 		try:
-			self.cursor.execute("INSERT INTO " + self.visited + " VALUES (%s, %s, %s, %s);", (url, str(urlType), domain, str(isScanned)))
+			self.cursor.execute("INSERT INTO " + self.visited + " VALUES (%s, %s, %s, %s);", (url, str(urlType), domain, str(False)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + self.visited)
@@ -198,6 +194,8 @@ class db(object):
 			print("Domain: " + domain + " cannot be selected from table " + self.visited)
 			self.conn.rollback()
 
+
+
 	'''
 	THIS PORTION IS FOR SCAN RESULT TABLE THAT IS USED BY THE VIRUSTOTAL SENDER AND RECEIVER
 	'''
@@ -211,7 +209,7 @@ class db(object):
 			self.conn.rollback()
 
 	# Updates the status column (0, 1, -2 or 2) in the scan result table in accordance to scanID provided
-	def editScanResultStatus(self, scanID, status):
+	def updateScanResultStatus(self, scanID, status):
 		try:
 			self.cursor.execute("UPDATE " + self.scanResult + " SET status = %s WHERE scanID = %s;", (str(status), scanID))
 			self.conn.commit()
@@ -227,12 +225,29 @@ class db(object):
 			print("Result cannot be updated in URL: " + url + " of table " + self.scanResult)
 			self.conn.rollback()	
 
+	# Returns a list of scanResults objects
+	def getUnscannedResults(self):
+		self.cursor.execute("SELECT * from " + self.scanResult + " WHERE status <> 2 LIMIT 4;")
+		rows = self.cursor.fetchall()
+		scanResultsList = []
+		for i in rows:
+			tempScanResults = scanResults()
+			tempScanResults.setScanID(i[0])
+			tempScanResults.setURL(i[1])
+			if i[2] is None :
+				tempScanResults.setResult("")
+			else:
+				tempScanResults.setResult(i[2])
+			tempScanResults.setStatus(int(i[3]))
+
+			scanResultsList.append(tempScanResults)
+		return scanResultsList
+
 
 
 	'''
 	THIS PORTION IS FOR URL QUEUE TABLE THAT IS USED BY THE CRAWLER
 	'''
-
 	def push(self, url):
 		try:
 			self.cursor.execute("INSERT INTO " + self.urlQueue + " (url) VALUES ('" + url + "');")
@@ -275,33 +290,33 @@ class db(object):
 			self.conn.rollback()
 
 
-	# Returns a list of scanResults objects
-	def getAllScanResults(self):
-		self.cursor.execute("SELECT * from scanResults")
-		rows = self.cursor.fetchall()
-		scanResultsList = []
-		for i in rows:
-			tempScanResults = scanResults()
-			tempScanResults.setFileName(i[0])
-			tempScanResults.setScanID(i[1])
-			tempScanResults.setPermalink(i[2])
-			scanResultsList.append(tempScanResults)
-		return scanResultsList
-
-	def getAllVisited(self):
-		self.cursor.execute("SELECT * FROM visitedTable")
-		rows = self.cursor.fetchall()
-		output = open('output.txt', 'w+')
-		for i in rows:
-			output.write("URL: " + i[0] + "\n")
-			output.write("File Data: " + str(i[1]) + "\n\n")
-		output.close()
-
-
+'''
 a = db()
 a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 # a.deleteTable("urlQueueTable")
 # a.createURLQueueTable("urlQueueTable")
+
+a.deleteTable("scanResultTable")
+a.deleteTable("visitedTable")
+a.createVisitedTable("visitedTable")
+a.createScanResultTable("scanResultTable")
+a.insertVisitedEntry("www.google.com.sg", 0, "www.google.com")
+a.insertVisitedEntry("www.google.com.hk", 0, "www.google.com")
+a.insertVisitedEntry("www.yahoo.com.sg", 0, "www.yahoo.com")
+a.insertVisitedEntry("www.yahoo.com.hk", 0, "www.yahoo.com")
+a.insertVisitedEntry("www.dropit.com", 0, "www.dropit.com")
+a.insertScanResultEntry("scanID_1", "www.dropit.com", "done", 2)
+a.insertScanResultEntry("scanID_2", "www.google.com.sg", None, 0)
+a.insertScanResultEntry("scanID_3", "www.google.com.hk", None, -2)
+a.insertScanResultEntry("scanID_4", "www.yahoo.com.sg", None, -2)
+a.insertScanResultEntry("scanID_5", "www.yahoo.com.hk", None, 1)
+
+scanList = a.getUnscannedResults()
+for i in scanList:
+	print("Scan ID: " + i.getScanID())
+	print("URL: " + i.getURL())
+	print("Result: " + i.getResult())
+	print("Status: " + str(i.getStatus()))
 # a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
 # a.insertVisitedEntry("visitedTable", "www.google.com.sg", 0, "www.google.com", False)
 # a.editVisitedScanEntry("visitedTable", "www.google.com.sg", True)
@@ -315,4 +330,4 @@ a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 # a.push("www.google.com")
 
 a.closeDB()
-
+'''
