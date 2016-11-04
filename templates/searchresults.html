@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>MACrawler --- Malware Analysis Crawler</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+	<div class="container">
+		<h1>Search Results</h1>
+
+		<p>Domain Name: {% domain_name %}</p>
+		<p>Number of Files Found In Domain: {% num_of_files %}</p>
+
+		{% if scan_results %}
+			<h2>File List</h2>
+			<ol>
+				{% for scan_result in scan_results %}
+					<li>scan_result.scanID</li>
+				{% endfor %}
+			</ol>
+		{% endif %}
+	</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
