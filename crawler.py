@@ -7,7 +7,8 @@ from urlparse import urlparse, urljoin
 import requests
 from HTMLParser import HTMLParser
 
-from database import db
+import database
+import utils
 
 # create a subclass and override the handler methods
 class MyHTMLParser(HTMLParser):
@@ -22,6 +23,15 @@ class MyHTMLParser(HTMLParser):
                 if attr[0].encode('utf-8') == 'href':
                     self.urls.append(attr[1].encode('utf-8'))
 
+##
+## @brief      Simulate enum type in Python 2
+##
+## Usage: UrlType.PAGE
+## The above returns 0.
+##
+class UrlType:
+    PAGE, FILE = range(2)
+
 class Crawler:
     """The class responsible to do the crawling"""
 
@@ -35,9 +45,9 @@ class Crawler:
     ## @param      url_q  The url Queue from which the Crawler retrieve and
     ##                    store URLs from/to
     ##
-    def __init__(self, url_q, db):
-        self.url_q = url_q
-        self.db = db
+    def __init__(self):
+        self.db = database.db()
+        utils.sync_table_names(self.db)
 
     ##
     ## @brief      Runs the crawler.
@@ -50,22 +60,22 @@ class Crawler:
             time.sleep(random.randint(5,15))
             # TODO(@digawp): handle case when the url_q is really empty (and no
             # one else is going to replenish it)
-            # NOTE: use a wrapper for the queue, timeout, try-catch
-            url = self.url_q.get()
-            print 'Visiting {}'.format(url)
+            url = ''
+            try:
+                url = self.db.pop()
+                print 'Visiting {}'.format(url)
+            except Exception as e:
+                print(e)
+                print 'Probably empty table. Continue...'
 
             response = requests.get(url)
-            parsed_url = urlparse(url)
             print 'Content-Type: ', response.headers['Content-Type']
 
             if 'text' not in response.headers['Content-Type']:
-                self.db.insertVisitedEntry(
-                        Crawler.VISITED_TABLE, url, response.content)
-                # out = open('file'+str(Crawler.get_file_count()), 'wb')
-                # out.write(response.content)
-                # out.close()
+                parsed_url = urlparse(url)
+                self.db.insertVisitedEntry(url, UrlType.FILE, url[1])
             else:
-                self.db.insertVisitedEntry(Crawler.VISITED_TABLE, url, None)
+                self.db.insertVisitedEntry(url, UrlType.PAGE, url[1])
                 parser = MyHTMLParser()
                 parser.feed(response.text)
                 for obtained_url in parser.urls:
@@ -80,26 +90,20 @@ class Crawler:
                         obtained_url = urljoin(url, obtained_url)
 
                     # print 'Pushing {} to url_q'.format(obtained_url)
-                    if not self.db.findVisitedEntry(obtained_url, Crawler.VISITED_TABLE):
-                        self.url_q.put(obtained_url)
+                    if not self.db.isVisited(obtained_url):
+                        self.db.push(obtained_url)
+        self.db.closeDB()
 
 
-def run_crawler(q, db):
-    crawler = Crawler(q, db)
+
+def run_crawler():
+    crawler = Crawler()
     crawler.run()
 
 if __name__ == '__main__':
-    db = db()
-    db.deleteTable('visitedTable')
-    db.deleteTable('fileDataTable')
-    db.createCrawlerTables('visitedTable','fileDataTable')
-
-    q = Queue()
-    q.put('http://www.comp.nus.edu.sg')
-
     threads = []
     for i in range(0,3):
-        t = Thread(target=run_crawler, args=(q,db))
+        t = Thread(target=run_crawler)
         t.start()
         threads.append(t)
 
@@ -112,5 +116,4 @@ if __name__ == '__main__':
         Crawler.stopped = True
         for i in range(0,3):
             threads[i].join()
-        db.closeDB()
         print "All threads exited. Exit main process."
