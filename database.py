@@ -85,7 +85,9 @@ class db(object):
 	def createScanResultTable(self, tableName):
 		try:
 			self.scanResult = tableName;
-			self.cursor.execute("CREATE TABLE " + tableName + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + self.visited + "(url), result varchar(3000), status numeric );")
+			self.cursor.execute("CREATE TABLE " + tableName \
+					+ " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + self.visited \
+					+ "(url), result varchar(3000), status numeric );")
 			self.conn.commit()
 		except Exception as e:
 			print("Scan Result Table creation failed")
@@ -211,8 +213,20 @@ class db(object):
 
 	# Returns a list of scanResults objects
 	def getUnscannedResults(self):
-		self.cursor.execute("SELECT * from " + self.scanResult + " WHERE status <> 2 LIMIT 4;")
+		self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status <> 2 LIMIT 4;")
 		rows = self.cursor.fetchall()
+		scanResultsList = self.readScanResults(rows)
+		return scanResultsList
+
+	def getAllScanResultsByDomain(self, domain):
+		self.cursor.execute("SELECT srt.scanID, srt.url, srt.result, srt.status FROM " \
+							+ self.scanResult + " srt, " + self.visited \
+							+ " vt WHERE vt.url = srt.url AND vt.domain = '" + domain + "';")
+		rows = self.cursor.fetchall()
+		scanResultsList = self.readScanResults(rows)
+		return scanResultsList
+
+	def readScanResults(self, rows):
 		scanResultsList = []
 		for i in rows:
 			tempScanResults = scanResults()
@@ -225,9 +239,7 @@ class db(object):
 			tempScanResults.setStatus(int(i[3]))
 
 			scanResultsList.append(tempScanResults)
-		return scanResultsList
-
-
+		return scanResultsList		
 
 	'''
 	THIS PORTION IS FOR URL QUEUE TABLE THAT IS USED BY THE CRAWLER
@@ -277,6 +289,7 @@ class db(object):
 '''
 a = db()
 a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
+
 # a.deleteTable("urlQueueTable")
 # a.createURLQueueTable("urlQueueTable")
 
@@ -301,6 +314,7 @@ for i in scanList:
 	print("URL: " + i.getURL())
 	print("Result: " + i.getResult())
 	print("Status: " + str(i.getStatus()))
+
 # a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
 # a.insertVisitedEntry("visitedTable", "www.google.com.sg", 0, "www.google.com", False)
 # a.editVisitedScanEntry("visitedTable", "www.google.com.sg", True)
