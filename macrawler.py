@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, url_for
 app = Flask(__name__)
 
+import utils
 from Database import db
 
 @app.route('/')
@@ -16,6 +17,7 @@ def search():
 		return render_template('index.html', error_message=error_message)
 	else:
 		MACdb = db()
+		utils.sync_table_names(MACdb)
 		scan_results = MACdb.getAllScanResultsByDomain(domain_name);
 
 		num_of_files = len(scan_results)

@@ -10,8 +10,8 @@
 	<div class="container">
 		<h1>Search Results</h1>
 
-		<p>Domain Name: {% domain_name %}</p>
-		<p>Number of Files Found In Domain: {% num_of_files %}</p>
+		<p>Domain Name: {{ domain_name }}</p>
+		<p>Number of Files Found In Domain: {{ num_of_files }}</p>
 
 		{% if scan_results %}
 			<h2>File List</h2>
