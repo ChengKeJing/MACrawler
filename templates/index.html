@@ -10,7 +10,7 @@
 
 		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-		<form class="form-inline" action="{{ url_for('search') }}" method="get">
+		<form class="form-inline" action="{{ url_for('search') }}" method="GET">
 			<div class="form-group">
 				<input type="text" class="form-control" placeholder="Enter a domain..." name="domain_name">
 			</div>

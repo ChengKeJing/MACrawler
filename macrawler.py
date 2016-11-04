@@ -1,22 +1,21 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, request, url_for
 app = Flask(__name__)
 
-from forms import SearchBar
 from Database import db
 
 @app.route('/')
 def index():
 	return render_template('index.html')
 
-@app.route('/search', methods=['GET'])
+@app.route('/search')
 def search():
-	search_form = SearchBar(csrf_enabled=False)
-	domain_name = search_form.domain_name;
+	domain_name = request.args.get('domain_name', '')
 
 	if not domain_name:
 		error_message = "Domain cannot be blank!"
-		return render_template('index.html', error_message)
+		return render_template('index.html', error_message=error_message)
 	else:
+		"""
 		MACdb = db()
 		scan_results = MACdb.getAllScanResultsByDomain(domain_name);
 
@@ -25,3 +24,5 @@ def search():
 		MACdb.closeDB()
 
 		return render_template('searchresults.html', num_of_files, domain_name, scan_results)
+		"""
+		return render_template('index.html')
