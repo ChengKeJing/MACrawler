@@ -54,6 +54,11 @@ class db(object):
 		except Exception as e:
 			print("Invalid dbname, user or password")
 
+	def insertTableNames(self, tableName_1, tableName_2, tableName_3):
+		self.visited = tableName_1
+		self.scanResult = tableName_2
+		self.urlQueue = tableName_3
+
 	def closeDB(self):
 		try:
 			self.cursor.close()
@@ -61,9 +66,36 @@ class db(object):
 		except Exception as e:
 			print("Database cannot close properly")
 
-	# Creates both visited table and fileData table
+	def createVisitedTable(self, tableName):
+		try:
+			self.visited = tableName;
+			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(256) PRIMARY KEY , urlType numeric, domain varchar(128), isScanned boolean);")
+			self.conn.commit()
+		except Exception as e:
+			print("Visited Table creation failed")		
+
+	def createScanResultTable(self, tableName):
+		try:
+			self.scanResult = tableName;
+			self.cursor.execute("CREATE TABLE " + tableName + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + tableName_1 + "(url), result varchar(3000), status numeric );")
+			self.conn.commit()
+		except Exception as e:
+			print("Scan Result Table creation failed")
+
+	def createURLQueueTable(self, tableName):
+		try:
+			self.urlQueue = tableName
+			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(256));")
+			self.conn.commit()
+		except Exception as e:
+			print("URL Queue Table creation failed")				
+
+	# Creates all the necessary tables
 	def createCrawlerTables(self, tableName_1, tableName_2, tableName_3):
 		try:
+			self.visited = tableName_1
+			self.scanResult = tableName_2
+			self.urlQueue = tableName_3
 			self.cursor.execute("CREATE TABLE " + tableName_1 + " ( url varchar(256) PRIMARY KEY , urlType numeric, domain varchar(128), isScanned boolean);")
 			self.conn.commit()
 			self.cursor.execute("CREATE TABLE " + tableName_2 + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + tableName_1 + "(url), result varchar(3000), status numeric );")
@@ -71,96 +103,177 @@ class db(object):
 			self.cursor.execute("CREATE TABLE " + tableName_3 + " ( id SERIAL, url varchar(256));")
 			self.conn.commit()
 		except Exception as e:
-			print("Visited Table creation failed")
+			print("Tables creation failed")
 
-	def deleteAllTables(self, tableName_1, tableName_2, tableName_3):
+	def deleteVisitedTable(self):
+		try: 
+			self.cursor.execute("DROP TABLE " + self.scanResult + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + self.urlQueue + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + self.visited + ";")
+			self.conn.commit()
+		except Exception as e:
+			print("Table cannot be dropped")
+			self.conn.rollback()
+
+	def deleteTable(self, tableName):
+		try:
+			self.cursor.execute("DROP TABLE " + tableName + ";")
+			self.conn.commit()
+		except Exception as e:
+			print("Table " + tableName + " cannot be dropped")
+			self.conn.rollback()
+
+	# Deletes all the existing tables
+	def deleteAllTablesWithNames(self, visitedTable, scanResultTable, urlQueueTable):
 		try:
 			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
-			self.cursor.execute("DROP TABLE " + tableName_2 + ";")
+			self.cursor.execute("DROP TABLE " + scanResultTable + ";")
 			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + tableName_3 + ";")
+			self.cursor.execute("DROP TABLE " + urlQueueTable + ";")
 			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + tableName_1 + ";")
+			self.cursor.execute("DROP TABLE " + visitedTable + ";")
+			self.conn.commit()
+		except Exception as e:
+			print("Table cannot be dropped")
+			self.conn.rollback()
+
+	# Deletes all the existing tables
+	def deleteAllTables(self):
+		try:
+			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
+			self.cursor.execute("DROP TABLE " + self.scanResult + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + self.urlQueue + ";")
+			self.conn.commit()
+			self.cursor.execute("DROP TABLE " + self.visited + ";")
 			self.conn.commit()
 		except Exception as e:
 			print("Table cannot be dropped")
 			self.conn.rollback()
 
 	'''
-	THIS PORTION IS FOR VISITED URL TABLE
+	THIS PORTION IS FOR VISITED URL TABLE THAT IS USED BY THE CRAWLER
 	'''
-
-	def insertVisitedEntry(self, tableName, url, urlType, domain, isScanned):
+	def insertVisitedEntry(self, url, urlType, domain, isScanned):
 		try:
-			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s, %s, %s);", (url, str(urlType), domain, str(isScanned)))
+			self.cursor.execute("INSERT INTO " + self.visited + " VALUES (%s, %s, %s, %s);", (url, str(urlType), domain, str(isScanned)))
 			self.conn.commit()
 		except Exception as e:
-			print("Url: " + url + " cannot be inserted into table " + tableName)
+			print("Url: " + url + " cannot be inserted into table " + self.visited)
 			self.conn.rollback()
 
-	def editVisitedScanEntry(self, tableName, url, isScanned):
+	# Updates the isScanned column in the visited Table in accordance to the url provided
+	# Input paramters (string, string, boolean) 
+	def editVisitedScanEntry(self, url, isScanned):
 		try:
-			self.cursor.execute("UPDATE " + tableName + " SET isScanned	= %s WHERE url = %s;", (str(isScanned), url))
+			self.cursor.execute("UPDATE " + self.visited + " SET isScanned	= %s WHERE url = %s;", (str(isScanned), url))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be updated")
 			self.conn.rollback()
 
-
-
-	'''
-	THIS PORTION IS FOR SCAN RESULT TABLE
-	'''
-
-	def insertScanResultEntry(self, tableName, scanID, url, result, status):
-		try:
-			self.cursor.execute("INSERT INTO " + tableName + " VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
-			self.conn.commit()
-		except Exception as e:
-			print("Url: " + url + " cannot be inserted into table " + tableName)
-			self.conn.rollback()
-
-	def editScanResultStatus(self, tableName, scanID, status):
-		try:
-			self.cursor.execute("UPDATE " + tableName + " SET status = %s WHERE scanID = %s;", (str(status), scanID))
-			self.conn.commit()
-		except Exception as e:
-			print("Url: " + url + " cannot be inserted into table " + tableName)
-			self.conn.rollback()	
-
-
-
-	'''
-	THIS PORTION IS FOR URL QUEUE TABLE
-	'''
-
-	def insertURLQueueEntry(self, tableName, url):
-		try:
-			self.cursor.execute("INSERT INTO " + tableName + " (url) VALUES ('" + url + "');")
-			self.conn.commit()
-		except Exception as e:
-			print("Url: " + url + " cannot be inserted into table " + tableName)
-			self.conn.rollback()
-
-	def deleteURLQueueEntry(self, tableName, url):
-		try:
-			self.cursor.execute("DELETE FROM " + tableName + " WHERE url = '" + url + "';")
-			self.conn.commit()
-		except Exception as e:
-			print("Url: " + url + " cannot be deleted from table " + tableName)
-			self.conn.rollback()
-
-	def findVisitedEntry(self, url, tableName):
-		try:
-			self.cursor.execute("SELECT url from " + tableName + " WHERE url = " + "'" + url + "';")
+	def isVisited(self, url):
+		try:		
+			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE url = '" + url + "';")
 			rows = self.cursor.fetchall()
 			if (len(rows) == 1):
 				return True
 			else:
 				return False
 		except Exception as e:
-			print("Error in fetch statement")
+			print("Url: " + url + " cannot be selected from table " + self.visited)
 			self.conn.rollback()
+
+	def getVisitedEntriesByDomain(self, domain):
+		try:		
+			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE domain = '" + domain + "';")
+			rows = self.cursor.fetchall()
+			if (len(rows) > 0):
+				return True
+			else:
+				return False
+		except Exception as e:
+			print("Domain: " + domain + " cannot be selected from table " + self.visited)
+			self.conn.rollback()
+
+	'''
+	THIS PORTION IS FOR SCAN RESULT TABLE THAT IS USED BY THE VIRUSTOTAL SENDER AND RECEIVER
+	'''
+	# Input parameters (string, string, string, string, int)
+	def insertScanResultEntry(self, scanID, url, result, status):
+		try:
+			self.cursor.execute("INSERT INTO " + self.scanResult + " VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be inserted into table " + self.scanResult)
+			self.conn.rollback()
+
+	# Updates the status column (0, 1, -2 or 2) in the scan result table in accordance to scanID provided
+	def editScanResultStatus(self, scanID, status):
+		try:
+			self.cursor.execute("UPDATE " + self.scanResult + " SET status = %s WHERE scanID = %s;", (str(status), scanID))
+			self.conn.commit()
+		except Exception as e:
+			print("Status cannot be updated in URL: " + url + " of table " + self.scanResult)
+			self.conn.rollback()	
+
+	def updateScanResults(self, scanID, result):
+		try:
+			self.cursor.execute("UPDATE " + self.scanResult + " SET result = %s WHERE scanID = %s;", (result, scanID))
+			self.conn.commit()
+		except Exception as e:
+			print("Result cannot be updated in URL: " + url + " of table " + self.scanResult)
+			self.conn.rollback()	
+
+
+
+	'''
+	THIS PORTION IS FOR URL QUEUE TABLE THAT IS USED BY THE CRAWLER
+	'''
+
+	def push(self, url):
+		try:
+			self.cursor.execute("INSERT INTO " + self.urlQueue + " (url) VALUES ('" + url + "');")
+			self.conn.commit()
+		except Exception as e:
+			print("Url: " + url + " cannot be inserted into table " + self.urlQueue)
+			self.conn.rollback()
+
+	def pop(self):
+		try:
+			self.cursor.execute("SELECT * FROM " + self.urlQueue + " ORDER BY id LIMIT 1;")
+			row = self.cursor.fetchall()
+			self.cursor.execute("DELETE FROM " + self.urlQueue + " WHERE id = '" + str(row[0][0]) + "';")
+			self.conn.commit()
+			return row[0][1]
+		except Exception as e:
+			print("Url: " + url + " cannot be popped from table " + self.urlQueue)
+			self.conn.rollback()
+
+	# Reset the serial sequence number
+	# NOTE: restartValue MUST BE > 0
+	def restartURLQueue(self, restartValue):
+		try:
+			self.cursor.execute("ALTER SEQUENCE " + self.urlQueue + "_id_seq RESTART WITH " + str(restartValue) + ";")
+			self.conn.commit()
+		except Exception as e:
+			print("URL Queue Table serial ID cannot be restarted")
+			self.conn.rollback()
+
+	def exists(self, url):
+		try:
+			self.cursor.execute("SELECT * FROM " + self.urlQueue + " WHERE url = '" + url + "';")
+			row = self.cursor.fetchall()		
+			if (len(row) > 0):
+				return True
+			else:
+				return False
+		except Exception as e:
+			print("Url: " + url + " cannot be popped from table " + self.urlQueue)
+			self.conn.rollback()
+
 
 	# Returns a list of scanResults objects
 	def getAllScanResults(self):
@@ -186,7 +299,9 @@ class db(object):
 
 
 a = db()
-# a.deleteAllTables("visitedTable", "scanResultTable", "urlQueueTable")
+a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
+# a.deleteTable("urlQueueTable")
+# a.createURLQueueTable("urlQueueTable")
 # a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
 # a.insertVisitedEntry("visitedTable", "www.google.com.sg", 0, "www.google.com", False)
 # a.editVisitedScanEntry("visitedTable", "www.google.com.sg", True)
@@ -194,7 +309,10 @@ a = db()
 # a.editScanResultStatus("scanResultTable", "scanID_1", 2)
 # a.insertURLQueueEntry("urlQueueTable", "www.google.com.sg")
 # a.deleteURLQueueEntry("urlQueueTable", "www.google.com.sg")
-
+# a.updateScanResults("scanResultTable", "scanID_1", None)
+# a.restartURLQueue("urlQueueTable", 1)
+# a.push("www.google.com.sg")
+# a.push("www.google.com")
 
 a.closeDB()
 
