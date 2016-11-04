@@ -77,7 +77,7 @@ class db(object):
 	def createVisitedTable(self, tableName):
 		try:
 			self.visited = tableName;
-			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(256) PRIMARY KEY , urlType numeric, domain varchar(128), isScanned boolean);")
+			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(2048) PRIMARY KEY , urlType numeric, domain varchar(256), isScanned boolean);")
 			self.conn.commit()
 		except Exception as e:
 			print("Visited Table creation failed")		
@@ -86,7 +86,7 @@ class db(object):
 		try:
 			self.scanResult = tableName;
 			self.cursor.execute("CREATE TABLE " + tableName \
-					+ " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + self.visited \
+					+ " ( scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
 					+ "(url), result varchar(3000), status numeric );")
 			self.conn.commit()
 		except Exception as e:
@@ -248,8 +248,15 @@ class db(object):
 		try:
 			self.cursor.execute("INSERT INTO " + self.urlQueue + " (url) VALUES ('" + url + "');")
 			self.conn.commit()
+		except psycopg2.IntegrityError as err:
+			# unique constraint violation is ignored
+			if err.pgcode == '23505':
+				pass
+			else:
+				print("Integrity error {}".format(err.pgcode))
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + self.urlQueue)
+		finally:
 			self.conn.rollback()
 
 	def pop(self):
