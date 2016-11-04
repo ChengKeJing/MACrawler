@@ -100,18 +100,9 @@ class db(object):
 
 	# Creates all the necessary tables
 	def createCrawlerTables(self, tableName_1, tableName_2, tableName_3):
-		try:
-			self.visited = tableName_1
-			self.scanResult = tableName_2
-			self.urlQueue = tableName_3
-			self.cursor.execute("CREATE TABLE " + tableName_1 + " ( url varchar(256) PRIMARY KEY , urlType numeric, domain varchar(128), isScanned boolean);")
-			self.conn.commit()
-			self.cursor.execute("CREATE TABLE " + tableName_2 + " ( scanID varchar(64) PRIMARY KEY, url varchar(256) REFERENCES " + tableName_1 + "(url), result varchar(3000), status numeric );")
-			self.conn.commit()
-			self.cursor.execute("CREATE TABLE " + tableName_3 + " ( id SERIAL, url varchar(256));")
-			self.conn.commit()
-		except Exception as e:
-			print("Tables creation failed")
+		self.createVisitedTable(tableName_1)
+		self.createScanResultTable(tableName_2)
+		self.createURLQueueTable(tableName_3)
 
 	def deleteVisitedTable(self):
 		try: 
@@ -135,17 +126,10 @@ class db(object):
 
 	# Deletes all the existing tables
 	def deleteAllTables(self):
-		try:
-			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
-			self.cursor.execute("DROP TABLE " + self.scanResult + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + self.urlQueue + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + self.visited + ";")
-			self.conn.commit()
-		except Exception as e:
-			print("Table cannot be dropped")
-			self.conn.rollback()
+		""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
+		self.deleteTable(self.scanResult)
+		self.deleteTable(self.urlQueue)
+		self.deleteTable(self.visited)
 
 
 
