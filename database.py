@@ -229,6 +229,8 @@ class db(object):
 		except Exception as e:
 			print("Unscanned Results cannot be retrieved due to error")
 			self.conn.rollback()
+			emptyList = []
+			return emptyList
 
 	def getAllScanResultsByDomain(self, domain):
 		try: 
@@ -241,6 +243,8 @@ class db(object):
 		except Exception as e:
 			print("All scanned results cannot be found due to error")
 			self.conn.rollback()
+			emptyList = []
+			return emptyList
 
 	def readScanResults(self, rows):
 		scanResultsList = []
