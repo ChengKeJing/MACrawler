@@ -67,6 +67,7 @@ class Crawler:
             except Exception as e:
                 print(e)
                 print 'Probably empty table. Continue...'
+                continue
 
             response = requests.get(url)
             print 'Content-Type: ', response.headers['Content-Type']
