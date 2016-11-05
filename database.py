@@ -59,14 +59,12 @@ class db(object):
 			connect_str = "dbname='MACdb' user='group11' host='localhost' password='12345'"
 			self.conn = psycopg2.connect(connect_str)
 			self.cursor = self.conn.cursor()
+			self.visited = "visitedTable"
+			self.scanResult = "scanResultTable"
+			self.urlQueue = "urlQueueTable"
 		except Exception as e:
 			print("Invalid dbname, user or password")
 			self.conn.rollback()
-
-	def insertTableNames(self, tableName_1, tableName_2, tableName_3):
-		self.visited = tableName_1
-		self.scanResult = tableName_2
-		self.urlQueue = tableName_3
 
 	def closeDB(self):
 		try:
@@ -76,52 +74,37 @@ class db(object):
 			print("Database cannot close properly")
 			self.conn.rollback()
 
-	def createVisitedTable(self, tableName):
+	def createVisitedTable(self):
 		try:
-			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(2048) PRIMARY KEY , urlType numeric, domain varchar(256), isScanned boolean);")
+			self.cursor.execute("CREATE TABLE " + self.visited + " ( url varchar(2048) PRIMARY KEY , urlType numeric, domain varchar(256), isScanned boolean);")
 			self.conn.commit()
-			self.visited = tableName;
 		except Exception as e:
 			print("Visited Table creation failed")	
 			self.conn.rollback()	
 
 	def createScanResultTable(self, tableName):
 		try:
-			self.cursor.execute("CREATE TABLE " + tableName \
+			self.cursor.execute("CREATE TABLE " + self.scanResult \
 					+ " (id SERIAL, scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
 					+ "(url), result varchar(3000), status numeric );")
 			self.conn.commit()
-			self.scanResult = tableName;
 		except Exception as e:
 			print("Scan Result Table creation failed")
 			self.conn.rollback()
 
 	def createURLQueueTable(self, tableName):
 		try:
-			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(2048) UNIQUE);")
+			self.cursor.execute("CREATE TABLE " + self.urlQueue + " ( id SERIAL, url varchar(2048) UNIQUE);")
 			self.conn.commit()
-			self.urlQueue = tableName
 		except Exception as e:
 			print("URL Queue Table creation failed")
 			self.conn.rollback()				
 
 	# Creates all the necessary tables
-	def createCrawlerTables(self, tableName_1, tableName_2, tableName_3):
-		self.createVisitedTable(tableName_1)
-		self.createScanResultTable(tableName_2)
-		self.createURLQueueTable(tableName_3)
-
-	def deleteVisitedTable(self):
-		try: 
-			self.cursor.execute("DROP TABLE " + self.scanResult + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + self.urlQueue + ";")
-			self.conn.commit()
-			self.cursor.execute("DROP TABLE " + self.visited + ";")
-			self.conn.commit()
-		except Exception as e:
-			print("Table cannot be dropped")
-			self.conn.rollback()
+	def createCrawlerTables(self):
+		self.createVisitedTable()
+		self.createScanResultTable()
+		self.createURLQueueTable()
 
 	def deleteTable(self, tableName):
 		try:
@@ -350,9 +333,8 @@ class db(object):
 			self.conn.rollback()
 
 
-'''
+
 a = db()
-a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 
 # a.deleteTable("urlQueueTable")
 # a.createURLQueueTable("urlQueueTable")
@@ -392,4 +374,3 @@ for i in urlList:
 # a.push("www.google.com")
 
 a.closeDB()
-'''
