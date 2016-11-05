@@ -337,7 +337,7 @@ class db(object):
 			self.conn.rollback()
 
 
-
+'''
 a = db()
 a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 
@@ -350,7 +350,7 @@ a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 # a.createScanResultTable("scanResultTable")
 # a.deleteAllTables()
 # a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
-'''
+
 a.insertVisitedEntry("www.google.com.sg", 0, "www.google.com")
 a.insertVisitedEntry("www.google.com.hk", 0, "www.google.com")
 a.insertVisitedEntry("www.yahoo.com.sg", 0, "www.yahoo.com")
@@ -361,7 +361,7 @@ a.insertScanResultEntry("scanID_2", "www.google.com.sg", None, 2)
 a.insertScanResultEntry("scanID_3", "www.google.com.hk", None, 2)
 a.insertScanResultEntry("scanID_4", "www.yahoo.com.sg", None, 2)
 a.insertScanResultEntry("scanID_5", "www.yahoo.com.hk", None, 2)
-'''
+
 scanList = a.getUnsentResults()
 for i in scanList:
 	print("Scan ID: " + i.getScanID())
@@ -382,4 +382,4 @@ for i in scanList:
 # a.push("www.google.com")
 
 a.closeDB()
-
+'''
