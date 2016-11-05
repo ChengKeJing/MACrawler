@@ -7,20 +7,17 @@ from database import db
 # global variable to terminate the run function
 finished = False
 
-# Initialize database connection
-MACdb = db()
-
 def run():
 	global finished
 	
+	# Initialize database connection
+	MACdb = db()
+
 	# wrap virus total in a class
 	vt = Virustotal()
 
 	# Time the last post packet to keep the rate below per 60 seconds
 	last_sending_time = -70
-
-	# Create DB table to store the scanning result
-	MACdb.createScanResultTable("scanResults")
 
 	while not finished:
 
@@ -31,34 +28,41 @@ def run():
 		if (current_time - last_sending_time) < 61 :
 			time.sleep(61 - current_time + last_sending_time)
 
-		# Retrieve the unscanned result from DB
+		# Retrieve the unretrieved result from DB
 		# DB will return four entries
-		unscanned_results = MACdb.getUnscannedResults();
-		URL_string = ""
-		for each_unscanned_result in unscanned_results:
-			URL_string += each_unscanned_result.getURL()
-			URL_string += "\n"
+		unretrieved_results = MACdb.getUnretrievedResults();
+		
+		HASH_ID_string = ""
+		for each_unretrieved_result in unretrieved_results:
+			URL_string += each_unretrieved_result.getScanID()
+			URL_string += ", "
 
-		# send four urls in batch
+		# send four urls' Hash in batch
 		last_sending_time = time.time()
-		website_return = vt.scanURL(URL_string)
-		print("Querying following URLs:\n", URL_string)
+		website_return = vt.rscBatchReport(URL_string)
+		print("Fetching result for following URL Hashes:\n", URL_string)
 
 		# Process the returned json string for each url scan
 		returned_table = json.loads(json.dumps(website_return))
 		for each_return in returned_table:
-			MACdb.insertScanResultEntry(each_return['scan_id'],
-										each_return['url'],
-										None,
-										each_return['response_code'])
+			response_code = each_return['response_code'])
+			
+			# If the server has not finish scanning this entry, just do nothing
+			# Next batch will fetch result of this url result again
+			if (response_code != 1):
+				# TODO: this means the url should be re-visited in next batch
+				# Modify DB implementation to allow this to be returned in getUnretrievedResults
+				# MACdb.updateScanResultStatus(each_return['scan_id'], -1)
+				continue
+			
+			# mark this url as retrieved
+			MACdb.updateScanResultStatus(each_return['scan_id'], 1)
+			is_malicious = (each_return['positives'] != 0)
 
-		# Store in the data base the hash and url
-		id_of_the_file = returned_table['scan_id']
-		link_to_result = returned_table['permalink']
-		print "id of the file is : ", id_of_the_file, "\nlink to the result is: ", link_to_result, "\n"
-
-		## Extract useful information and store it into database
-		MACdb.insertScanResult("scanResults", file_name, id_of_the_file, link_to_result)
+			if (is_malicious):
+				MACdb.updateScanResults(each_return['scan_id'], each_return['scans'])
+			else:
+				MACdb.updateScanResults(each_return['scan_id'], "Safes")
 
 try:
 	run()

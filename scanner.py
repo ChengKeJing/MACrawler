@@ -7,20 +7,17 @@ from database import db
 # global variable to terminate the run function
 finished = False
 
-# Initialize database connection
-MACdb = db()
-
 def run():
 	global finished
+	
+	# Initialize database connection
+	MACdb = db()
 	
 	# wrap virus total in a class
 	vt = Virustotal()
 
 	# Time the last post packet to keep the rate below per 60 seconds
 	last_sending_time = -70
-
-	# Create DB table to store the scanning result
-	MACdb.createScanResultTable("scanResults")
 
 	while not finished:
 
@@ -33,7 +30,7 @@ def run():
 
 		# Retrieve the unscanned result from DB
 		# DB will return four entries
-		unscanned_results = MACdb.getUnscannedResults();
+		unscanned_results = MACdb.getUnsentResult();
 		URL_string = ""
 		for each_unscanned_result in unscanned_results:
 			URL_string += each_unscanned_result.getURL()
