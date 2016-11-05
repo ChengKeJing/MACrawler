@@ -13,7 +13,6 @@ def run():
 	
 	# Initialize database connection
 	MACdb = db()
-	utils.sync_table_names(MACdb)
 
 	# wrap virus total in a class
 	vt = Virustotal()

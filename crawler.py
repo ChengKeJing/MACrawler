@@ -49,7 +49,6 @@ class Crawler:
     ##
     def __init__(self):
         self.db = database.db()
-        utils.sync_table_names(self.db)
 
     ##
     ## @brief      Runs the crawler.
