@@ -1,6 +1,5 @@
 import random
 import time
-from Queue import Queue
 from threading import Thread, RLock
 from urlparse import urlparse, urljoin
 
@@ -35,6 +34,9 @@ class UrlType:
 class Crawler:
     """The class responsible to do the crawling"""
 
+    # Lock for DB access
+    db_lock = RLock()
+
     # To accept interrupt
     stopped = False
 
@@ -62,7 +64,8 @@ class Crawler:
             # one else is going to replenish it)
             url = ''
             try:
-                url = self.db.pop()
+                with Crawler.db_lock:
+                    url = self.db.pop()
                 print 'Visiting {}'.format(url)
             except Exception as e:
                 print(e)
@@ -74,9 +77,11 @@ class Crawler:
 
             if 'text' not in response.headers['Content-Type']:
                 parsed_url = urlparse(url)
-                self.db.insertVisitedEntry(url, UrlType.FILE, url[1])
+                with Crawler.db_lock:
+                    self.db.insertVisitedEntry(url, UrlType.FILE, url[1])
             else:
-                self.db.insertVisitedEntry(url, UrlType.PAGE, url[1])
+                with Crawler.db_lock:
+                    self.db.insertVisitedEntry(url, UrlType.PAGE, url[1])
                 parser = MyHTMLParser()
                 parser.feed(response.text)
                 for obtained_url in parser.urls:
@@ -91,8 +96,9 @@ class Crawler:
                         obtained_url = urljoin(url, obtained_url)
 
                     # print 'Pushing {} to url_q'.format(obtained_url)
-                    if not self.db.isVisited(obtained_url):
-                        self.db.push(obtained_url)
+                    with Crawler.db_lock:
+                        if not self.db.isVisited(obtained_url):
+                            self.db.push(obtained_url)
         self.db.closeDB()
 
 

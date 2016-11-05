@@ -1,5 +1,4 @@
 import time
-import os.path
 import json
 
 from virustotal import *
@@ -8,62 +7,47 @@ from database import db
 # global variable to terminate the run function
 finished = False
 
-# Initialize database connection
-MACdb = db()
-
 def run():
 	global finished
 	
+	# Initialize database connection
+	MACdb = db()
+	
 	# wrap virus total in a class
-	v = Virustotal()
+	vt = Virustotal()
 
-	# Counter for file names
-	file_count = 1
-
-	# Time the last post packet to keep the rate below per 15 seconds
-	last_sending_time = -20
-
-	# Delete old table and recreate new one
-	MACdb.deleteTable("scanResults")
-	MACdb.createScanResultTable("scanResults")
+	# Time the last post packet to keep the rate below per 60 seconds
+	last_sending_time = -70
 
 	while not finished:
-		
-		# Following the file names from crawler.py
-		file_name = 'file' + str(file_count)
-		file_count += 1
-		print "processing :", file_name
 
-		# If the file is not found, wait for the crawler to generate more files
-		while (not os.path.isfile(file_name)) and (not finished):
-			time.sleep(5)
-		
 		# Check the time elipsed since last post packet
 		current_time = time.time()
 
-		# Pause to make up for the 15 seconds interval
-		if (current_time - last_sending_time) < 15 :
-			time.sleep(16 - current_time + last_sending_time)
+		# Pause to make up for the 60 seconds interval
+		if (current_time - last_sending_time) < 61 :
+			time.sleep(61 - current_time + last_sending_time)
 
-		# second post packet
+		# Retrieve the unscanned result from DB
+		# DB will return four entries
+		unscanned_results = MACdb.getUnsentResult();
+		URL_string = ""
+		for each_unscanned_result in unscanned_results:
+			URL_string += each_unscanned_result.getURL()
+			URL_string += "\n"
+
+		# send four urls in batch
 		last_sending_time = time.time()
-		website_return = v.rscSubmit(file_name)
+		website_return = vt.scanURL(URL_string)
+		print("Querying following URLs:\n", URL_string)
 
-		# Process the returned json string
+		# Process the returned json string for each url scan
 		returned_table = json.loads(json.dumps(website_return))
-
-		# code 1 means success
-		response_code = returned_table['response_code']
-		if (response_code != 1):
-			continue
-
-		# Store in the data base the hash and url
-		id_of_the_file = returned_table['scan_id']
-		link_to_result = returned_table['permalink']
-		print "id of the file is : ", id_of_the_file, "\nlink to the result is: ", link_to_result, "\n"
-
-		## Extract useful information and store it into database
-		MACdb.insertScanResult("scanResults", file_name, id_of_the_file, link_to_result)
+		for each_return in returned_table:
+			MACdb.insertScanResultEntry(each_return['scan_id'],
+										each_return['url'],
+										None,
+										0)
 
 try:
 	run()
