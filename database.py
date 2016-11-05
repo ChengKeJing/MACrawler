@@ -188,6 +188,19 @@ class db(object):
 			print("Domain: " + domain + " cannot be selected from table " + self.visited)
 			self.conn.rollback()
 
+	def getUnscannedResults(self):
+		try:		
+			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE isScanned = False;")
+			rows = self.cursor.fetchall()
+			urlList = []
+			for i in rows:
+				urlList.append(i[0])
+			return urlList
+		except Exception as e:
+			print("Unscanned Results cannot be selected from table " + self.visited + ": An empty list will be returned")
+			self.conn.rollback()
+			urlList = []
+			return urlList
 
 
 	'''
@@ -362,12 +375,9 @@ a.insertScanResultEntry("scanID_3", "www.google.com.hk", None, 2)
 a.insertScanResultEntry("scanID_4", "www.yahoo.com.sg", None, 2)
 a.insertScanResultEntry("scanID_5", "www.yahoo.com.hk", None, 2)
 
-scanList = a.getUnsentResults()
-for i in scanList:
-	print("Scan ID: " + i.getScanID())
-	print("URL: " + i.getURL())
-	print("Result: " + i.getResult())
-	print("Status: " + str(i.getStatus()))
+urlList = a.getUnscannedResults()
+for i in urlList:
+	print("URL: " + i + "\n")
 
 # a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
 # a.insertVisitedEntry("visitedTable", "www.google.com.sg", 0, "www.google.com", False)
