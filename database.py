@@ -95,7 +95,7 @@ class db(object):
 	def createURLQueueTable(self, tableName):
 		try:
 			self.urlQueue = tableName
-			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(256) UNIQUE);")
+			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(2048) UNIQUE);")
 			self.conn.commit()
 		except Exception as e:
 			print("URL Queue Table creation failed")				
