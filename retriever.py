@@ -50,7 +50,15 @@ def run():
 			MACdb.insertScanResultEntry(each_return['scan_id'],
 										each_return['url'],
 										None,
-										0)
+										each_return['response_code'])
+
+		# Store in the data base the hash and url
+		id_of_the_file = returned_table['scan_id']
+		link_to_result = returned_table['permalink']
+		print "id of the file is : ", id_of_the_file, "\nlink to the result is: ", link_to_result, "\n"
+
+		## Extract useful information and store it into database
+		MACdb.insertScanResult("scanResults", file_name, id_of_the_file, link_to_result)
 
 try:
 	run()
