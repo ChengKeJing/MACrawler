@@ -29,8 +29,8 @@ def run():
 		if (current_time - last_sending_time) < 61 :
 			time.sleep(61 - current_time + last_sending_time)
 
-		# Retrieve the unscanned result from DB
-		# DB will return four entries
+		# Retrieve the unscanned url from DB
+		# DB will return a list of four urls
 		unscanned_results = MACdb.getUnscannedResults();
 
 		# If no current available links are available, sleep and try again
@@ -39,10 +39,10 @@ def run():
 			continue
 
 		URL_string = ""
-		for each_unscanned_result in unscanned_results:
-			URL_string += each_unscanned_result.getURL()
+		for each_unscanned_url in unscanned_results:
+			URL_string += each_unscanned_url
 			URL_string += "\n"
-			MACdb.editVisitedScanEntry(each_unscanned_result.getURL(), True)
+			MACdb.editVisitedScanEntry(each_unscanned_url, True)
 
 		# send four urls in batch (might be less than four in case DB returns less than 4 urls)
 		last_sending_time = time.time()
