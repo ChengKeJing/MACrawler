@@ -30,13 +30,20 @@ def run():
 
 		# Retrieve the unscanned result from DB
 		# DB will return four entries
-		unscanned_results = MACdb.getUnsentResult();
+		unscanned_results = MACdb.getUnscannedResults();
+
+		# If no current available links are available, sleep and try again
+		if (len(unscanned_results) == 0):
+			time.sleep(10)
+			continue
+
 		URL_string = ""
 		for each_unscanned_result in unscanned_results:
 			URL_string += each_unscanned_result.getURL()
 			URL_string += "\n"
+			MACdb.editVisitedScanEntry(each_unscanned_result.getURL(), True)
 
-		# send four urls in batch
+		# send four urls in batch (might be less than four in case DB returns less than 4 urls)
 		last_sending_time = time.time()
 		website_return = vt.scanURL(URL_string)
 		print("Querying following URLs:\n", URL_string)

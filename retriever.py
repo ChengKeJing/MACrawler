@@ -32,6 +32,11 @@ def run():
 		# DB will return four entries
 		unretrieved_results = MACdb.getUnretrievedResults();
 		
+		# Wait for 10 seconds for scanner to insert more entries to the data base
+		if(len(unretrieved_results) == 0):
+			time.sleep(10)
+			continue;
+
 		HASH_ID_string = ""
 		for each_unretrieved_result in unretrieved_results:
 			URL_string += each_unretrieved_result.getScanID()
@@ -45,14 +50,16 @@ def run():
 		# Process the returned json string for each url scan
 		returned_table = json.loads(json.dumps(website_return))
 		for each_return in returned_table:
-			response_code = each_return['response_code'])
+			response_code = each_return['response_code']
 			
 			# If the server has not finish scanning this entry, just do nothing
 			# Next batch will fetch result of this url result again
-			if (response_code != 1):
-				# TODO: this means the url should be re-visited in next batch
-				# Modify DB implementation to allow this to be returned in getUnretrievedResults
-				# MACdb.updateScanResultStatus(each_return['scan_id'], -1)
+			if (response_code == -2):
+				continue
+
+			# VirusTotal will return 0 for invalid url
+			if (response_code == 0):
+				MACdb.updateScanResultStatus(each_return['scan_id'], -1)
 				continue
 			
 			# mark this url as retrieved
@@ -62,7 +69,7 @@ def run():
 			if (is_malicious):
 				MACdb.updateScanResults(each_return['scan_id'], each_return['scans'])
 			else:
-				MACdb.updateScanResults(each_return['scan_id'], "Safes")
+				MACdb.updateScanResults(each_return['scan_id'], "Safe")
 
 try:
 	run()
