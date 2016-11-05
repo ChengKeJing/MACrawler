@@ -61,6 +61,7 @@ class db(object):
 			self.cursor = self.conn.cursor()
 		except Exception as e:
 			print("Invalid dbname, user or password")
+			self.conn.rollback()
 
 	def insertTableNames(self, tableName_1, tableName_2, tableName_3):
 		self.visited = tableName_1
@@ -73,32 +74,36 @@ class db(object):
 			self.conn.close()
 		except Exception as e:
 			print("Database cannot close properly")
+			self.conn.rollback()
 
 	def createVisitedTable(self, tableName):
 		try:
-			self.visited = tableName;
 			self.cursor.execute("CREATE TABLE " + tableName + " ( url varchar(2048) PRIMARY KEY , urlType numeric, domain varchar(256), isScanned boolean);")
 			self.conn.commit()
+			self.visited = tableName;
 		except Exception as e:
-			print("Visited Table creation failed")		
+			print("Visited Table creation failed")	
+			self.conn.rollback()	
 
 	def createScanResultTable(self, tableName):
 		try:
-			self.scanResult = tableName;
 			self.cursor.execute("CREATE TABLE " + tableName \
-					+ " ( scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
+					+ " (id SERIAL, scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
 					+ "(url), result varchar(3000), status numeric );")
 			self.conn.commit()
+			self.scanResult = tableName;
 		except Exception as e:
 			print("Scan Result Table creation failed")
+			self.conn.rollback()
 
 	def createURLQueueTable(self, tableName):
 		try:
-			self.urlQueue = tableName
 			self.cursor.execute("CREATE TABLE " + tableName + " ( id SERIAL, url varchar(2048) UNIQUE);")
 			self.conn.commit()
+			self.urlQueue = tableName
 		except Exception as e:
-			print("URL Queue Table creation failed")				
+			print("URL Queue Table creation failed")
+			self.conn.rollback()				
 
 	# Creates all the necessary tables
 	def createCrawlerTables(self, tableName_1, tableName_2, tableName_3):
@@ -128,11 +133,14 @@ class db(object):
 
 	# Deletes all the existing tables
 	def deleteAllTables(self):
-		""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
-		self.deleteTable(self.scanResult)
-		self.deleteTable(self.urlQueue)
-		self.deleteTable(self.visited)
-
+		try:
+			""" DONT EVER RANDOMLY DROP TABLE. TABLE DROPPED CANNOT BE RECOVERED DONT PLAY PLAY """
+			self.deleteTable(self.scanResult)
+			self.deleteTable(self.urlQueue)
+			self.deleteTable(self.visited)
+		except Exception as e:
+			print("Error encountered when deleting all tables")
+			self.conn.rollback()
 
 
 	'''
@@ -188,7 +196,7 @@ class db(object):
 	# Input parameters (string, string, string, string, int)
 	def insertScanResultEntry(self, scanID, url, result, status):
 		try:
-			self.cursor.execute("INSERT INTO " + self.scanResult + " VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
+			self.cursor.execute("INSERT INTO " + self.scanResult + " (scanID, url, result, status) VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
 			self.conn.commit()
 		except Exception as e:
 			print("Url: " + url + " cannot be inserted into table " + self.scanResult)
@@ -212,31 +220,67 @@ class db(object):
 			self.conn.rollback()	
 
 	# Returns a list of scanResults objects
-	def getUnscannedResults(self):
-		self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status <> 2 LIMIT 4;")
-		rows = self.cursor.fetchall()
-		scanResultsList = self.readScanResults(rows)
-		return scanResultsList
+	def getUnsentResults(self):
+		try: 
+			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 2 LIMIT 4;")
+			rows = self.cursor.fetchall()
+			scanResultsList = self.readScanResults(rows)
+			return scanResultsList
+		except Exception as e:
+			print("Unscanned Results cannot be retrieved due to error")
+			self.conn.rollback()
+			emptyList = []
+			return emptyList
+
+	def getUnretrievedResults(self):
+		try:
+			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 0 LIMIT 4;")
+			rows = self.cursor.fetchall()
+			scanResultsList = self.readScanResults(rows)
+			return scanResultsList
+		except Exception as e:
+			print("Unretrieved Results cannot be retrieved due to error")
+			self.conn.rollback()
+			emptyList = []
+			return emptyList
+
+	def getRetrievedResults(self):
+		try:
+			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 1 OR status = -1;")
+			rows = self.cursor.fetchall()
+			scanResultsList = self.readScanResults(rows)
+			return scanResultsList
+		except Exception as e:
+			print("Retrieved Results cannot be retrieved due to error")
+			self.conn.rollback()
+			emptyList = []
+			return emptyList
 
 	def getAllScanResultsByDomain(self, domain):
-		self.cursor.execute("SELECT srt.scanID, srt.url, srt.result, srt.status FROM " \
-							+ self.scanResult + " srt, " + self.visited \
-							+ " vt WHERE vt.url = srt.url AND vt.domain = '" + domain + "';")
-		rows = self.cursor.fetchall()
-		scanResultsList = self.readScanResults(rows)
-		return scanResultsList
+		try: 
+			self.cursor.execute("SELECT srt.scanID, srt.url, srt.result, srt.status FROM " \
+								+ self.scanResult + " srt, " + self.visited \
+								+ " vt WHERE vt.url = srt.url AND vt.domain = '" + domain + "';")
+			rows = self.cursor.fetchall()
+			scanResultsList = self.readScanResults(rows)
+			return scanResultsList
+		except Exception as e:
+			print("All scanned results cannot be found due to error")
+			self.conn.rollback()
+			emptyList = []
+			return emptyList
 
 	def readScanResults(self, rows):
 		scanResultsList = []
 		for i in rows:
 			tempScanResults = scanResults()
-			tempScanResults.setScanID(i[0])
-			tempScanResults.setURL(i[1])
-			if i[2] is None :
+			tempScanResults.setScanID(i[1])
+			tempScanResults.setURL(i[2])
+			if i[3] is None :
 				tempScanResults.setResult("")
 			else:
-				tempScanResults.setResult(i[2])
-			tempScanResults.setStatus(int(i[3]))
+				tempScanResults.setResult(i[3])
+			tempScanResults.setStatus(int(i[4]))
 
 			scanResultsList.append(tempScanResults)
 		return scanResultsList		
@@ -293,29 +337,32 @@ class db(object):
 			self.conn.rollback()
 
 
-'''
+
 a = db()
 a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 
 # a.deleteTable("urlQueueTable")
 # a.createURLQueueTable("urlQueueTable")
 
-a.deleteTable("scanResultTable")
-a.deleteTable("visitedTable")
-a.createVisitedTable("visitedTable")
-a.createScanResultTable("scanResultTable")
+# a.deleteTable("scanResultTable")
+# a.deleteTable("visitedTable")
+# a.createVisitedTable("visitedTable")
+# a.createScanResultTable("scanResultTable")
+# a.deleteAllTables()
+# a.createCrawlerTables("visitedTable", "scanResultTable", "urlQueueTable")
+'''
 a.insertVisitedEntry("www.google.com.sg", 0, "www.google.com")
 a.insertVisitedEntry("www.google.com.hk", 0, "www.google.com")
 a.insertVisitedEntry("www.yahoo.com.sg", 0, "www.yahoo.com")
 a.insertVisitedEntry("www.yahoo.com.hk", 0, "www.yahoo.com")
 a.insertVisitedEntry("www.dropit.com", 0, "www.dropit.com")
 a.insertScanResultEntry("scanID_1", "www.dropit.com", "done", 2)
-a.insertScanResultEntry("scanID_2", "www.google.com.sg", None, 0)
-a.insertScanResultEntry("scanID_3", "www.google.com.hk", None, -2)
-a.insertScanResultEntry("scanID_4", "www.yahoo.com.sg", None, -2)
-a.insertScanResultEntry("scanID_5", "www.yahoo.com.hk", None, 1)
-
-scanList = a.getUnscannedResults()
+a.insertScanResultEntry("scanID_2", "www.google.com.sg", None, 2)
+a.insertScanResultEntry("scanID_3", "www.google.com.hk", None, 2)
+a.insertScanResultEntry("scanID_4", "www.yahoo.com.sg", None, 2)
+a.insertScanResultEntry("scanID_5", "www.yahoo.com.hk", None, 2)
+'''
+scanList = a.getUnsentResults()
 for i in scanList:
 	print("Scan ID: " + i.getScanID())
 	print("URL: " + i.getURL())
@@ -335,4 +382,4 @@ for i in scanList:
 # a.push("www.google.com")
 
 a.closeDB()
-'''
+
