@@ -82,7 +82,7 @@ class db(object):
 			print("Visited Table creation failed")	
 			self.conn.rollback()	
 
-	def createScanResultTable(self, tableName):
+	def createScanResultTable(self):
 		try:
 			self.cursor.execute("CREATE TABLE " + self.scanResult \
 					+ " (id SERIAL, scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
@@ -92,7 +92,7 @@ class db(object):
 			print("Scan Result Table creation failed")
 			self.conn.rollback()
 
-	def createURLQueueTable(self, tableName):
+	def createURLQueueTable(self):
 		try:
 			self.cursor.execute("CREATE TABLE " + self.urlQueue + " ( id SERIAL, url varchar(2048) UNIQUE);")
 			self.conn.commit()
@@ -333,7 +333,7 @@ class db(object):
 			self.conn.rollback()
 
 
-
+'''
 a = db()
 
 # a.deleteTable("urlQueueTable")
@@ -374,3 +374,4 @@ for i in urlList:
 # a.push("www.google.com")
 
 a.closeDB()
+'''

@@ -8,7 +8,7 @@ from database import db
 TABLE_VISITED = 'visitedTable'
 TABLE_QUEUE = 'urlQueueTable'
 TABLE_RESULTS = 'scanResultTable'
-
+'''
 ##
 ## @brief      Used to ensure the db class use the same table names across all
 ##             the different modules
@@ -17,13 +17,13 @@ TABLE_RESULTS = 'scanResultTable'
 ##
 def sync_table_names(db):
     db.insertTableNames(TABLE_VISITED, TABLE_RESULTS, TABLE_QUEUE)
-
+'''
 if __name__ == '__main__':
     if sys.argv[1] == 'clean-db':
         db = db()
-        sync_table_names(db)
+        #[Commented out] sync_table_names(db)
         db.deleteAllTables()
-        db.createCrawlerTables(TABLE_VISITED, TABLE_RESULTS, TABLE_QUEUE)
+        db.createCrawlerTables()
         # Add seeds here. The more malicious the better
         db.push('http://nus.edu.sg')
         db.push('http://comp.nus.edu.sg')
