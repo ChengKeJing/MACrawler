@@ -309,7 +309,7 @@ class db(object):
 			self.conn.rollback()
 
 
-
+'''
 a = db()
 a.insertTableNames("visitedTable", "scanResultTable", "urlQueueTable")
 
@@ -352,4 +352,4 @@ for i in scanList:
 # a.push("www.google.com")
 
 a.closeDB()
-
+'''
