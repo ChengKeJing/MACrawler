@@ -190,7 +190,7 @@ class db(object):
 
 	def getUnscannedResults(self):
 		try:		
-			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE isScanned = False;")
+			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE isScanned = False LIMIT 4;")
 			rows = self.cursor.fetchall()
 			urlList = []
 			for i in rows:
