@@ -48,7 +48,7 @@ class Crawler:
     def run(self):
         UrlType = database.UrlType
         while not Crawler.stopped:
-            print "Sleeping..."
+            # print "Sleeping..."
             time.sleep(random.randint(5,15))
             # TODO(@digawp): handle case when the url_q is really empty (and no
             # one else is going to replenish it)
@@ -56,19 +56,19 @@ class Crawler:
             try:
                 with Crawler.db_lock:
                     url = self.db.pop()
-                print 'Visiting {}'.format(url)
+                # print 'Visiting {}'.format(url)
             except Exception as e:
                 print(e)
-                print 'Probably empty table. Skipping URL...'
+                print 'Probably empty table. Skipping {}'.format(url)
                 continue
 
             response = None
             try:
                 response = requests.get(url)
-                print 'Content-Type: ', response.headers['Content-Type']
+                # print 'Content-Type: ', response.headers['Content-Type']
             except Exception as e:
                 print e
-                print 'Error when sending request. Skipping URL...'
+                print 'Error when sending request. Skipping {}'.format(url)
                 continue
 
             parsed_url = urlparse(url)

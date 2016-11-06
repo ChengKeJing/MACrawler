@@ -29,7 +29,7 @@ def run():
 			# Pause to make up for the 60 seconds interval
 			if (current_time - last_sending_time) < 61 :
 				time_to_sleep = 61 - current_time + last_sending_time
-				print("Going to sleep for {0} to make time interval 61 seconds".format(time_to_sleep))
+				# print("Going to sleep for {0} to make time interval 61 seconds".format(time_to_sleep))
 				time.sleep(time_to_sleep)
 
 			# Retrieve the unscanned url from DB
@@ -38,7 +38,7 @@ def run():
 
 			# If no current available links are available, sleep and try again
 			if (len(unscanned_results) < 2):
-				print("Scanner: Retrieved less than 2 entries from Database. Sleep for 10 seconds to retry.")
+				# print("Scanner: Retrieved less than 2 entries from Database. Sleep for 10 seconds to retry.")
 				time.sleep(10)
 				continue
 
@@ -51,12 +51,12 @@ def run():
 			# send four urls in batch (might be less than four in case DB returns less than 4 urls)
 			last_sending_time = time.time()
 			website_return = vt.scanURL(URL_string)
-			print("Querying following URLs:\n", URL_string)
+			# print("Querying following URLs:\n", URL_string)
 
 			# Process the returned json string for each url scan
 			returned_table = json.loads(json.dumps(website_return))
 			for each_return in returned_table:
-				print("Scanner: insertScanResultEntry({0}, {1}, {2}, {3})".format(each_return['scan_id'],each_return['url'],None, 0))
+				# print("Scanner: insertScanResultEntry({0}, {1}, {2}, {3})".format(each_return['scan_id'],each_return['url'],None, 0))
 				MACdb.insertScanResultEntry(each_return['scan_id'],
 											each_return['url'],
 											None,
