@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, url_for
 app = Flask(__name__)
 
-import json
+import ast
 import utils
 from database import db
 
@@ -37,6 +37,6 @@ def detailed():
 	if scans == 'Safe':
 		scans_dict = 'Safe'
 	else:
-		scans_dict = json.loads(scans)
+		scans_dict = ast.literal_eval(scans)
 
 	return render_template('detailedresult.html', domain_name=domain_name, scan_id=scan_id, scans=scans_dict)

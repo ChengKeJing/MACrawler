@@ -25,21 +25,20 @@
 			{% else %}
 				<table class="table">
 					<colgroup span="3"></colgroup>
-					
+
 					<!-- Table Headers -->
 					<tr>
-						<th col-md-3>Antivirus</th>
-						<th col-md-3>Detected?</th>
-						<th col-md-3>Antivirus Version</th>
-						<th col-md-3>Antivirus Definition Update</th>
+						<th col-md-6>Antivirus</th>
+						<th col-md-6>Scan Result</th>
 					</tr>
 
 					<!-- Table Headers -->
 					{% for av_name, av_details in scans.items() %}
 						<tr>
-							<td class="col-md-4" style ="word-break:break-all;">{{ av_name }}</td>
-							<td class="col-md-4" style ="word-break:break-all;">{{ av_details["version"] }}</td>
-							<td class="col-md-4" style ="word-break:break-all;">{{ av_details["update"] }}</td>
+							<td class="col-md-6" style ="word-break:break-all;">{{ av_name }}</td>
+
+
+							<td class="col-md-6" style ="word-break:break-all;">{{ av_details.result }}</td>
 						</tr>
 					{% endfor %}
 				</table>
