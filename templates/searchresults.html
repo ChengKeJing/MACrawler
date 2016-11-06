@@ -7,51 +7,51 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
 <body>
-
+<div class="container">
 	<div class="jumbotron">
 		<h1 align="center">Search Results</h1>
 
-		<div class="container">
+
 			<p><strong>Domain Name:</strong> {{ domain_name }}</p>
 			<p><strong>Number of Files Found In Domain:</strong> {{ num_of_files }}</p>
 
 			<form class="form-inline" action="{{ url_for('index') }}" method="GET">
 				<button type="submit" class="btn btn-default">Return to Search Page</button>
-			</form>		
+			</form>
 
-		</div>
 	</div>
 
 	{# Only display the file list if there is at least one file found in the domain #}
-	
+
 	<h2>File List</h2>
 	<div class="row">
 		<div class="col-md-12">
-			<table class="table">
-			<colgroup span="3"></colgroup>
-		
-			<!-- Table Headers -->
-			<tr>
-				<th class="col-md-4">Scan ID</th>
-				<th class="col-md-4">URL</th>
-				<th class="col-md-4">Scan Status</th>
-			</tr>
+			<table class="table table-condensed">
+				<colgroup span="3"></colgroup>
 
-			{% for scan_result in scan_results %}
-			<tr>						
-				<td class="col-md-4"><a href="{{ url_for('detailed', scan_id=scan_result.scanID, scans=scan_result.result, domain_name=domain_name) }}">{{ scan_result.scanID }}</a></td>
-				<td class="col-md-4">{{ scan_result.url }}</td>
-				{% if scan_result.status == 1 %}
-					<td class="col-md-4">Complete</td>
-				{% elif scan_result.status == -2 %}
-					<td class="col-md-4">Pending result from VirusTotal</td>
-				{% endif %}		
-			</tr>
-			{% endfor %}
+				<!-- Table Headers -->
+				<tr>
+					<th class="col-md-4">Scan ID</th>
+					<th class="col-md-4">URL</th>
+					<th class="col-md-4">Scan Status</th>
+				</tr>
+
+				{% for scan_result in scan_results %}
+				<tr>
+					<td class="col-md-4" style ="word-break:break-all;"><a href="{{ url_for('detailed', scan_id=scan_result.scanID, scans=scan_result.result, domain_name=domain_name) }}">{{ scan_result.scanID }}</a></td>
+					<td class="col-md-4" style ="word-break:break-all;">{{ scan_result.url }}</td>
+					{% if scan_result.status == 1 %}
+						<td class="col-md-4">Complete</td>
+					{% elif scan_result.status == -2 %}
+						<td class="col-md-4">Pending result from VirusTotal</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+
+			</table>
 		</div>
-
-	</table>
-	</div>	
+	</div>
+</div>
 
 
 
