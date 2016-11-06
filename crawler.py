@@ -30,12 +30,6 @@ class Crawler:
     # To accept interrupt
     stopped = False
 
-    @staticmethod
-    def strip_scheme(url):
-        parsed = urlparse(url)
-        scheme = "%s://" % parsed.scheme
-        return parsed.geturl().replace(scheme, '', 1)
-
     ##
     ## @brief      Constructor.
     ##
@@ -78,14 +72,12 @@ class Crawler:
                 continue
 
             parsed_url = urlparse(url)
-            stripped_url = Crawler.strip_scheme(url)
-
             if 'text' not in response.headers['Content-Type']:
                 with Crawler.db_lock:
-                    self.db.insertVisitedEntry(stripped_url, UrlType.FILE, parsed_url[1])
+                    self.db.insertVisitedEntry(url, UrlType.FILE, parsed_url[1])
             else:
                 with Crawler.db_lock:
-                    self.db.insertVisitedEntry(stripped_url, UrlType.PAGE, parsed_url[1])
+                    self.db.insertVisitedEntry(url, UrlType.PAGE, parsed_url[1])
                 parser = MyHTMLParser()
                 parser.feed(response.text)
                 for obtained_url in parser.urls:
@@ -100,11 +92,11 @@ class Crawler:
                         obtained_url = urljoin(url, obtained_url)
 
                     # print 'Pushing {} to url_q'.format(obtained_url)
-                    stripped_obtained_url = Crawler.strip_scheme(obtained_url)
                     with Crawler.db_lock:
-                        if not self.db.isVisited(stripped_obtained_url):
+                        if not self.db.isVisited(obtained_url):
                             self.db.push(obtained_url)
         self.db.closeDB()
+
 
 
 def run_crawler():
