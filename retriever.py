@@ -68,7 +68,7 @@ def run():
 			is_malicious = (each_return['positives'] != 0)
 
 			if (is_malicious):
-				MACdb.updateScanResults(each_return['scan_id'], each_return['scans'])
+				MACdb.updateScanResults(each_return['scan_id'], str(each_return['scans']))
 			else:
 				MACdb.updateScanResults(each_return['scan_id'], "Safe")
 
