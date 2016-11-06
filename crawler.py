@@ -79,13 +79,13 @@ class Crawler:
                 print 'Error when sending request. Skipping URL...'
                 continue
 
+            parsed_url = urlparse(url)
             if 'text' not in response.headers['Content-Type']:
-                parsed_url = urlparse(url)
                 with Crawler.db_lock:
-                    self.db.insertVisitedEntry(url, UrlType.FILE, url[1])
+                    self.db.insertVisitedEntry(url, UrlType.FILE, parsed_url[1])
             else:
                 with Crawler.db_lock:
-                    self.db.insertVisitedEntry(url, UrlType.PAGE, url[1])
+                    self.db.insertVisitedEntry(url, UrlType.PAGE, parsed_url[1])
                 parser = MyHTMLParser()
                 parser.feed(response.text)
                 for obtained_url in parser.urls:
