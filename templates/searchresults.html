@@ -8,19 +8,46 @@
 </head>
 <body>
 	<div class="container">
-		<h1>Search Results</h1>
+		<div class="jumbotron">
+			<h1 align="center">Search Results</h1>
 
-		<p>Domain Name: {{ domain_name }}</p>
-		<p>Number of Files Found In Domain: {{ num_of_files }}</p>
+			<p><strong>Domain Name:</strong> {{ domain_name }}</p>
+			<p><strong>Number of Files Found In Domain:</strong> {{ num_of_files }}</p>
 
-		{% if scan_results %}
-			<h2>File List</h2>
-			<ol>
-				{% for scan_result in scan_results %}
-					<li>scan_result.scanID</li>
-				{% endfor %}
-			</ol>
-		{% endif %}
+			<form class="form-inline" action="{{ url_for('index') }}" method="GET">
+				<button type="submit" class="btn btn-default">Return to Search Page</button>
+			</form>		
+		</div>
+
+		<div>
+			{# Only display the file list if there is at least one file found in the domain #}
+			{% if search_results %}
+				<h2>File List</h2>
+				<table class="table">
+					<colgroup span="3"></colgroup>
+					
+					<!-- Table Headers -->
+					<tr>
+						<th>Scan ID</th>
+						<th>URL</th>
+						<th>Scan Status</th>
+					</tr>
+
+					<tr>
+						{% for scan_result in scan_results %}
+							<td><a href="{{ url_for('detailed', scan_id=scan_result.scanID, scans=scan_result.scans) }}">{{ scan_result.scanID }}</a></td>
+							<td>{{ scan_result.url }}</td>
+							{% if scan_result.status == 1 %}
+								<td>Complete</td>
+							{% elif scan_result.status == -2 %}
+								<td>Pending result from VirusTotal</td>
+							{% endif %}
+						{% endfor %}
+					</tr>
+				</table>
+			{% endif %}
+		</div>
+
 	</div>
 </body>
 </html>
