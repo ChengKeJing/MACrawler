@@ -21,15 +21,6 @@ class MyHTMLParser(HTMLParser):
                 if attr[0].encode('utf-8') == 'href':
                     self.urls.append(attr[1].encode('utf-8'))
 
-##
-## @brief      Simulate enum type in Python 2
-##
-## Usage: UrlType.PAGE
-## The above returns 0.
-##
-class UrlType:
-    PAGE, FILE = range(2)
-
 class Crawler:
     """The class responsible to do the crawling"""
 
@@ -55,6 +46,7 @@ class Crawler:
     ## @param      self  The object
     ##
     def run(self):
+        UrlType = database.UrlType
         while not Crawler.stopped:
             print "Sleeping..."
             time.sleep(random.randint(5,15))
