@@ -54,8 +54,8 @@ class scanResults(object):
 
 class db(object):
 	# Initialization includes connection and creation of cursor
-	def __init__(self):	
-		try: 
+	def __init__(self):
+		try:
 			connect_str = "dbname='MACdb' user='group11' host='localhost' password='12345'"
 			self.conn = psycopg2.connect(connect_str)
 			self.cursor = self.conn.cursor()
@@ -79,14 +79,14 @@ class db(object):
 			self.cursor.execute("CREATE TABLE " + self.visited + " ( url varchar(2048) PRIMARY KEY , urlType numeric, domain varchar(256), isScanned boolean);")
 			self.conn.commit()
 		except Exception as e:
-			print("Visited Table creation failed")	
-			self.conn.rollback()	
+			print("Visited Table creation failed")
+			self.conn.rollback()
 
 	def createScanResultTable(self):
 		try:
 			self.cursor.execute("CREATE TABLE " + self.scanResult \
-					+ " (id SERIAL, scanID varchar(64) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
-					+ "(url), result varchar(3000), status numeric );")
+					+ " (id SERIAL, scanID varchar(80) PRIMARY KEY, url varchar(2048) REFERENCES " + self.visited \
+					+ "(url), result text, status numeric );")
 			self.conn.commit()
 		except Exception as e:
 			print("Scan Result Table creation failed")
@@ -98,7 +98,7 @@ class db(object):
 			self.conn.commit()
 		except Exception as e:
 			print("URL Queue Table creation failed")
-			self.conn.rollback()				
+			self.conn.rollback()
 
 	# Creates all the necessary tables
 	def createCrawlerTables(self):
@@ -138,7 +138,7 @@ class db(object):
 			self.conn.rollback()
 
 	# Updates the isScanned column in the visited Table in accordance to the url provided
-	# Input paramters (string, string, boolean) 
+	# Input paramters (string, string, boolean)
 	def editVisitedScanEntry(self, url, isScanned):
 		try:
 			self.cursor.execute("UPDATE " + self.visited + " SET isScanned	= %s WHERE url = %s;", (str(isScanned), url))
@@ -148,7 +148,7 @@ class db(object):
 			self.conn.rollback()
 
 	def isVisited(self, url):
-		try:		
+		try:
 			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE url = '" + url + "';")
 			rows = self.cursor.fetchall()
 			if (len(rows) == 1):
@@ -160,7 +160,7 @@ class db(object):
 			self.conn.rollback()
 
 	def getVisitedEntriesByDomain(self, domain):
-		try:		
+		try:
 			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE domain = '" + domain + "';")
 			rows = self.cursor.fetchall()
 			if (len(rows) > 0):
@@ -172,7 +172,7 @@ class db(object):
 			self.conn.rollback()
 
 	def getUnscannedResults(self):
-		try:		
+		try:
 			self.cursor.execute("SELECT url FROM " + self.visited + " WHERE isScanned = False LIMIT 4;")
 			rows = self.cursor.fetchall()
 			urlList = []
@@ -195,6 +195,7 @@ class db(object):
 			self.cursor.execute("INSERT INTO " + self.scanResult + " (scanID, url, result, status) VALUES (%s, %s, %s, %s);", (scanID, url, result, str(status)))
 			self.conn.commit()
 		except Exception as e:
+			print e
 			print("Url: " + url + " cannot be inserted into table " + self.scanResult)
 			self.conn.rollback()
 
@@ -205,7 +206,7 @@ class db(object):
 			self.conn.commit()
 		except Exception as e:
 			print("Status cannot be updated in URL: " + url + " of table " + self.scanResult)
-			self.conn.rollback()	
+			self.conn.rollback()
 
 	def updateScanResults(self, scanID, result):
 		try:
@@ -213,11 +214,11 @@ class db(object):
 			self.conn.commit()
 		except Exception as e:
 			print("Result cannot be updated in URL: " + url + " of table " + self.scanResult)
-			self.conn.rollback()	
+			self.conn.rollback()
 
 	# Returns a list of scanResults objects
 	def getUnsentResults(self):
-		try: 
+		try:
 			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 2 LIMIT 4;")
 			rows = self.cursor.fetchall()
 			scanResultsList = self.readScanResults(rows)
@@ -253,7 +254,7 @@ class db(object):
 			return emptyList
 
 	def getAllScanResultsByDomain(self, domain):
-		try: 
+		try:
 			self.cursor.execute("SELECT srt.scanID, srt.url, srt.result, srt.status FROM " \
 								+ self.scanResult + " srt, " + self.visited \
 								+ " vt WHERE vt.url = srt.url AND vt.domain = '" + domain + "';")
@@ -279,7 +280,7 @@ class db(object):
 			tempScanResults.setStatus(int(i[4]))
 
 			scanResultsList.append(tempScanResults)
-		return scanResultsList		
+		return scanResultsList
 
 	'''
 	THIS PORTION IS FOR URL QUEUE TABLE THAT IS USED BY THE CRAWLER
@@ -323,7 +324,7 @@ class db(object):
 	def exists(self, url):
 		try:
 			self.cursor.execute("SELECT * FROM " + self.urlQueue + " WHERE url = '" + url + "';")
-			row = self.cursor.fetchall()		
+			row = self.cursor.fetchall()
 			if (len(row) > 0):
 				return True
 			else:
