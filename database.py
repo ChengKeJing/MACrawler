@@ -228,7 +228,7 @@ class db(object):
 	# Returns a list of scanResults objects
 	def getUnsentResults(self):
 		try:
-			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 2 LIMIT 4;")
+			self.cursor.execute("SELECT scanID, url, result, status FROM " + self.scanResult + " WHERE status = 2 LIMIT 4;")
 			rows = self.cursor.fetchall()
 			scanResultsList = self.readScanResults(rows)
 			return scanResultsList
@@ -240,7 +240,7 @@ class db(object):
 
 	def getUnretrievedResults(self):
 		try:
-			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 0 LIMIT 4;")
+			self.cursor.execute("SELECT scanID, url, result, status FROM " + self.scanResult + " WHERE status = 0 LIMIT 4;")
 			rows = self.cursor.fetchall()
 			scanResultsList = self.readScanResults(rows)
 			return scanResultsList
@@ -252,7 +252,7 @@ class db(object):
 
 	def getRetrievedResults(self):
 		try:
-			self.cursor.execute("SELECT * FROM " + self.scanResult + " WHERE status = 1 OR status = -1;")
+			self.cursor.execute("SELECT scanID, url, result, status FROM " + self.scanResult + " WHERE status = 1 OR status = -1;")
 			rows = self.cursor.fetchall()
 			scanResultsList = self.readScanResults(rows)
 			return scanResultsList
@@ -280,13 +280,13 @@ class db(object):
 		scanResultsList = []
 		for i in rows:
 			tempScanResults = scanResults()
-			tempScanResults.setScanID(i[1])
-			tempScanResults.setURL(i[2])
+			tempScanResults.setScanID(i[0])
+			tempScanResults.setURL(i[1])
 			if i[3] is None :
 				tempScanResults.setResult("")
 			else:
-				tempScanResults.setResult(i[3])
-			tempScanResults.setStatus(int(i[4]))
+				tempScanResults.setResult(i[2])
+			tempScanResults.setStatus(int(i[3]))
 
 			scanResultsList.append(tempScanResults)
 		return scanResultsList
