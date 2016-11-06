@@ -7,7 +7,6 @@ import requests
 from HTMLParser import HTMLParser
 
 import database
-import utils
 
 # create a subclass and override the handler methods
 class MyHTMLParser(HTMLParser):
@@ -68,11 +67,17 @@ class Crawler:
                 print 'Visiting {}'.format(url)
             except Exception as e:
                 print(e)
-                print 'Probably empty table. Continue...'
+                print 'Probably empty table. Skipping URL...'
                 continue
 
-            response = requests.get(url)
-            print 'Content-Type: ', response.headers['Content-Type']
+            response = None
+            try:
+                response = requests.get(url)
+                print 'Content-Type: ', response.headers['Content-Type']
+            except Exception as e:
+                print e
+                print 'Error when sending request. Skipping URL...'
+                continue
 
             if 'text' not in response.headers['Content-Type']:
                 parsed_url = urlparse(url)
