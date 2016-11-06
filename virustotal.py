@@ -46,8 +46,8 @@ class Virustotal():
         parameters = {"resource":rsc, "scan":scan, "apikey":self.apikey}
         r = requests.post(base, data=parameters)
         resp = r.json()
-        results = parse_resp(resp)
-        return results
+        # results = parse_resp(resp)
+        return resp
 
     def ipReport(self, rsc):
         """ Get latest report for IP Address """
