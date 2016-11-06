@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, url_for
 app = Flask(__name__)
 
+import json
 import utils
 from database import db
 
@@ -27,6 +28,15 @@ def search():
 
 		return render_template('searchresults.html', num_of_files=num_of_files, domain_name=domain_name, scan_results=scan_results)
 
-@app.route('/detailed/<string:scan_id>')
-def detailed(scan_id, scans):
-	return render_template('detailedresults.html', scan_id=scan_id, scans=scans)
+@app.route('/detailed')
+def detailed():
+	scans = request.args.get('scans', '')
+	scan_id = request.args.get('scan_id', '')
+	domain_name = request.args.get('domain_name', '')
+
+	if scans == "Safe":
+		scans_dict = None
+	else:
+		scans_dict = json.loads(scans)
+
+	return render_template('detailedresult.html', domain_name=domain_name, scan_id=scan_id, scans=scans_dict)

@@ -7,39 +7,36 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
 <body>
-	<div class="container">
-		<div class="jumbotron">
-			<h1 align="center">Detailed Results for Scan ID {{ scan_id }}</h1>
+	<div class="jumbotron">
+		<h1 align="center">Detailed Results for Scan ID {{ scan_id }}</h1>
 
-			<p><strong>Domain Found Under:</strong> {{ domain_name }}</p>
+		<p><strong>Domain Found Under:</strong> {{ domain_name }}</p>
 
-			<input type="button" value="Back" onclick="window.history.back()" />
-		</div>
+		<input type="button" value="Back" onclick="window.history.back()" />
+	</div>
 
-		<div>
-			<h2>Antivirus Scan Results</h2>
-			<table class="table">
-				<colgroup span="3"></colgroup>
-				
-				<!-- Table Headers -->
-				<tr>
-					<th>Antivirus</th>
-					<th>Detected?</th>
-					<th>Antivirus Version</th>
-					<th>Antivirus Definition Update</th>
-				</tr>
+	<div>
+		<h2>Antivirus Scan Results</h2>
+		<table class="table">
+			<colgroup span="3"></colgroup>
+			
+			<!-- Table Headers -->
+			<tr>
+				<th>Antivirus</th>
+				<th>Detected?</th>
+				<th>Antivirus Version</th>
+				<th>Antivirus Definition Update</th>
+			</tr>
 
-				<!-- Table Headers -->
-				{% for av_name, av_details in scans.iteritems() %}
-				<tr>
-					<td>{{ av_name }}</td>
-					<td>{{ av_details["version"] }}</td>
-					<td>{{ av_details["update"] }}</td>
-				</tr>
-				{% endfor %}
-			</table>
-		</div>
-
+			<!-- Table Headers -->
+			{% for av_name, av_details in scans.iteritems() %}
+			<tr>
+				<td>{{ av_name }}</td>
+				<td>{{ av_details["version"] }}</td>
+				<td>{{ av_details["update"] }}</td>
+			</tr>
+			{% endfor %}
+		</table>
 	</div>
 </body>
 </html>
