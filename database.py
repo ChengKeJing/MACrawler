@@ -116,7 +116,7 @@ class db(object):
 
 	def deleteTable(self, tableName):
 		try:
-			self.cursor.execute("DROP TABLE " + tableName + ";")
+			self.cursor.execute("DROP TABLE IF EXISTS " + tableName + ";")
 			self.conn.commit()
 		except Exception as e:
 			print("Table " + tableName + " cannot be dropped. Error type: " + str(e))

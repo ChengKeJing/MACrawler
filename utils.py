@@ -14,7 +14,6 @@ if __name__ == '__main__':
     db.push('http://thepiratebay.org/')
     db.push('http://download.cnet.com/')
     db.push('http://www.msconline.com/')
-    db.push('http://www.szxx.com.cn/')
     db.push('http://www.airdental.es/')
     db.push('http://comp.nus.edu.sg/')
     db.closeDB()
