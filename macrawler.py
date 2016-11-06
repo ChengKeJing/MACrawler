@@ -26,3 +26,7 @@ def search():
 		MACdb.closeDB()
 
 		return render_template('searchresults.html', num_of_files=num_of_files, domain_name=domain_name, scan_results=scan_results)
+
+@app.route('/detailed/<string:scan_id>')
+def detailed(scan_id, scans):
+	return render_template('detailedresults.html', scan_id=scan_id, scans=scans)

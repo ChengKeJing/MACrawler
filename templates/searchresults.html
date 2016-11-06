@@ -20,6 +20,7 @@
 		</div>
 
 		<div>
+			{# Only display the file list if there is at least one file found in the domain #}
 			{% if search_results %}
 				<h2>File List</h2>
 				<table class="table">
@@ -34,7 +35,7 @@
 
 					<tr>
 						{% for scan_result in scan_results %}
-							<td>{{ scan_result.scanID }}</td>
+							<td><a href="{{ url_for('detailed'), scan_id='scan_result.scanID', scans=scan_result.scans }}">{{ scan_result.scanID }}</a></td>
 							<td>{{ scan_result.url }}</td>
 							{% if scan_result.status == 1 %}
 								<td>Complete</td>
