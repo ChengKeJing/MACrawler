@@ -7,36 +7,47 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
 <body>
+<div class="container">
 	<div class="jumbotron">
-		<h1 align="center">Detailed Results for Scan ID {{ scan_id }}</h1>
+		<h1 align="center">Detailed Results</h1>
 
+		<p><strong>Scan ID:</strong> {{ scan_id }}</p>
 		<p><strong>Domain Found Under:</strong> {{ domain_name }}</p>
 
-		<input type="button" value="Back" onclick="window.history.back()" />
+		<input type="button" class="btn btn-default" value="Back" onclick="window.history.back()" />
 	</div>
 
-	<div>
-		<h2>Antivirus Scan Results</h2>
-		<table class="table">
-			<colgroup span="3"></colgroup>
-			
-			<!-- Table Headers -->
-			<tr>
-				<th>Antivirus</th>
-				<th>Detected?</th>
-				<th>Antivirus Version</th>
-				<th>Antivirus Definition Update</th>
-			</tr>
+	<div class="row">
+		<div class="col-md-12">
+			<h2><strong>Antivirus Scan Results</strong></h2>
+			{% if scans == 'Safe' %}
+				<p>VirusTotal did not detect any malware in this file.</p>
+			{% else %}
+				<table class="table">
+					<colgroup span="3"></colgroup>
+					
+					<!-- Table Headers -->
+					<tr>
+						<th col-md-3>Antivirus</th>
+						<th col-md-3>Detected?</th>
+						<th col-md-3>Antivirus Version</th>
+						<th col-md-3>Antivirus Definition Update</th>
+					</tr>
 
-			<!-- Table Headers -->
-			{% for av_name, av_details in scans.iteritems() %}
-			<tr>
-				<td>{{ av_name }}</td>
-				<td>{{ av_details["version"] }}</td>
-				<td>{{ av_details["update"] }}</td>
-			</tr>
-			{% endfor %}
-		</table>
+					<!-- Table Headers -->
+					{% for av_name, av_details in scans.items() %}
+						<tr>
+							<td class="col-md-4" style ="word-break:break-all;">{{ av_name }}</td>
+							<td class="col-md-4" style ="word-break:break-all;">{{ av_details["version"] }}</td>
+							<td class="col-md-4" style ="word-break:break-all;">{{ av_details["update"] }}</td>
+						</tr>
+					{% endfor %}
+				</table>
+			{% endif %}
+		</div>
 	</div>
+
+
+</div>
 </body>
 </html>

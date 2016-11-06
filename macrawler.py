@@ -34,8 +34,8 @@ def detailed():
 	scan_id = request.args.get('scan_id', '')
 	domain_name = request.args.get('domain_name', '')
 
-	if scans == "Safe":
-		scans_dict = None
+	if scans == 'Safe':
+		scans_dict = 'Safe'
 	else:
 		scans_dict = json.loads(scans)
 

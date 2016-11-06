@@ -26,24 +26,24 @@
 	<h2>File List</h2>
 	<div class="row">
 		<div class="col-md-12">
-			<table class="table table-condensed">
+			<table class="table table-hover table-bordered table-condensed">
 				<colgroup span="3"></colgroup>
 
 				<!-- Table Headers -->
 				<tr>
-					<th class="col-md-4">Scan ID</th>
-					<th class="col-md-4">URL</th>
-					<th class="col-md-4">Scan Status</th>
+					<th class="col-md-4">Scan ID (md5)</th>
+					<th class="col-md-7">URL</th>
+					<th class="col-md-1">Scan Status</th>
 				</tr>
 
 				{% for scan_result in scan_results %}
 				<tr>
-					<td class="col-md-4" style ="word-break:break-all;"><a href="{{ url_for('detailed', scan_id=scan_result.scanID, scans=scan_result.result, domain_name=domain_name) }}">{{ scan_result.scanID }}</a></td>
-					<td class="col-md-4" style ="word-break:break-all;">{{ scan_result.url }}</td>
+					<td class="col-md-4" style="word-break:break-all;"><a href="{{ url_for('detailed', scan_id=scan_result.scanID, scans=scan_result.result, domain_name=domain_name) }}">{{ scan_result.scanID }}</a></td>
+					<td class="col-md-4" style="word-break:break-all;">{{ scan_result.url }}</td>
 					{% if scan_result.status == 1 %}
-						<td class="col-md-4">Complete</td>
+						<td class="col-md-7 success" style="text-align: center; vertical-align: middle">Complete</td>
 					{% elif scan_result.status == -2 %}
-						<td class="col-md-4">Pending result from VirusTotal</td>
+						<td class="col-md-1 warning" style="text-align: center; vertical-align: middle">Pending</td>
 					{% endif %}
 				</tr>
 				{% endfor %}
