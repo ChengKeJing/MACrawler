@@ -9,21 +9,20 @@
 <body>
 <div class="container">
 	<div class="jumbotron">
-		<h1 align="center">Search Results</h1>
+		<h1 style="text-align: center; padding-bottom: 30px">Search Results</h1>
 
+		<p><strong>Domain Name:</strong> {{ domain_name }}</p>
+		<p><strong>Number of Files Found In Domain:</strong> {{ num_of_files }}</p>
 
-			<p><strong>Domain Name:</strong> {{ domain_name }}</p>
-			<p><strong>Number of Files Found In Domain:</strong> {{ num_of_files }}</p>
-
-			<form class="form-inline" action="{{ url_for('index') }}" method="GET">
-				<button type="submit" class="btn btn-default">Return to Search Page</button>
-			</form>
+		<form class="form-inline" style="padding-top: 30px" action="{{ url_for('index') }}" method="GET">
+			<button type="submit" class="btn btn-default">Return to Search Page</button>
+		</form>
 
 	</div>
 
 	{# Only display the file list if there is at least one file found in the domain #}
 
-	<h2>File List</h2>
+	<h2><strong>File List</strong></h2>
 	<div class="row">
 		<div class="col-md-12">
 			<table class="table table-hover table-bordered table-condensed">
